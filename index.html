@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poke Championship League</title>
+    <script>
+      (function() {
+        try {
+          var originalFetch = window.fetch || (typeof globalThis !== 'undefined' ? globalThis.fetch : null);
+          var fetchVal = originalFetch;
+          var descriptor = {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return fetchVal;
+            },
+            set: function(v) {
+              fetchVal = v;
+            }
+          };
+          try {
+            Object.defineProperty(window, 'fetch', descriptor);
+          } catch(e) {
+            console.warn("Could not patch window.fetch:", e);
+          }
+          if (typeof globalThis !== 'undefined') {
+            try {
+              Object.defineProperty(globalThis, 'fetch', descriptor);
+            } catch(e) {
+              console.warn("Could not patch globalThis.fetch:", e);
+            }
+          }
+        } catch(err) {
+          console.error("Fetch patch failed:", err);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

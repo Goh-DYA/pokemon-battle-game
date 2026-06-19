@@ -1,0 +1,460 @@
+import { Move } from '../types';
+
+export const MOVES_DATABASE: Record<string, Omit<Move, 'pp'>> = {
+  // Normal
+  'Body Slam': {
+    name: 'Body Slam',
+    type: 'Normal',
+    category: 'Physical',
+    power: 85,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'A full-body slam that has a 30% chance to paralyze.',
+    effect: { status: 'Paralysis', chance: 0.3, type: 'target' },
+  },
+  'Hyper Beam': {
+    name: 'Hyper Beam',
+    type: 'Normal',
+    category: 'Special',
+    power: 150,
+    accuracy: 90,
+    maxPp: 5,
+    description: 'A powerful blast. Deals massive damage but has slightly lower accuracy.',
+  },
+  'Recover': {
+    name: 'Recover',
+    type: 'Normal',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Heals the user by 50% of its maximum HP.',
+    effect: { hasRecover: true },
+  },
+  'Swords Dance': {
+    name: 'Swords Dance',
+    type: 'Normal',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 20,
+    description: 'Shakes up a battle dance. Sharply boots Attack (+2 stages).',
+    effect: { type: 'self', stat: 'attack', stages: 2 },
+  },
+
+  // Fire
+  'Flamethrower': {
+    name: 'Flamethrower',
+    type: 'Fire',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'An intense stream of fire. Has a 10% chance to burn.',
+    effect: { status: 'Burn', chance: 0.1, type: 'target' },
+  },
+  'Fire Blast': {
+    name: 'Fire Blast',
+    type: 'Fire',
+    category: 'Special',
+    power: 110,
+    accuracy: 85,
+    maxPp: 5,
+    description: 'A fiery burst shaped like the symbol for fire. Has a 10% chance to burn.',
+    effect: { status: 'Burn', chance: 0.1, type: 'target' },
+  },
+  'Will-O-Wisp': {
+    name: 'Will-O-Wisp',
+    type: 'Fire',
+    category: 'Status',
+    power: 0,
+    accuracy: 85,
+    maxPp: 15,
+    description: 'Sinister blue flames that inflict a Burn status on the opponent.',
+    effect: { status: 'Burn', chance: 1.0, type: 'target' },
+  },
+
+  // Water
+  'Surf': {
+    name: 'Surf',
+    type: 'Water',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'A giant tidal wave that crashes down on the foe.',
+  },
+  'Hydro Pump': {
+    name: 'Hydro Pump',
+    type: 'Water',
+    category: 'Special',
+    power: 110,
+    accuracy: 80,
+    maxPp: 5,
+    description: 'A blast of high-pressure water that strikes the opponent.',
+  },
+  'Scald': {
+    name: 'Scald',
+    type: 'Water',
+    category: 'Special',
+    power: 80,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Boiling hot water sprayed at the target. Has a 30% chance to burn.',
+    effect: { status: 'Burn', chance: 0.3, type: 'target' },
+  },
+
+  // Grass
+  'Energy Ball': {
+    name: 'Energy Ball',
+    type: 'Grass',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Draws power from nature and fires a glowing ball of energy.',
+  },
+  'Leaf Storm': {
+    name: 'Leaf Storm',
+    type: 'Grass',
+    category: 'Special',
+    power: 130,
+    accuracy: 90,
+    maxPp: 5,
+    description: 'Stirs up a storm of sharp leaves. Lowers the user\'s Sp. Atk (-2 stages).',
+    effect: { type: 'self', stat: 'spAttack', stages: -2 },
+  },
+  'Giga Drain': {
+    name: 'Giga Drain',
+    type: 'Grass',
+    category: 'Special',
+    power: 75,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Siphons the opponent\'s nutrients to heal for half the damage dealt.',
+    effect: { hasRecover: true }, // Simplified to heal some HP on use in engine
+  },
+
+  // Electric
+  'Thunderbolt': {
+    name: 'Thunderbolt',
+    type: 'Electric',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'A strong electrical discharge. Has a 10% chance to paralyze.',
+    effect: { status: 'Paralysis', chance: 0.1, type: 'target' },
+  },
+  'Thunder Wave': {
+    name: 'Thunder Wave',
+    type: 'Electric',
+    category: 'Status',
+    power: 0,
+    accuracy: 90,
+    maxPp: 20,
+    description: 'A weak shock of electricity that paralyzes the target.',
+    effect: { status: 'Paralysis', chance: 1.0, type: 'target' },
+  },
+
+  // Ice
+  'Ice Beam': {
+    name: 'Ice Beam',
+    type: 'Ice',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'An icy blast of absolute cold. Has a 10% chance to freeze.',
+    effect: { status: 'Freeze', chance: 0.1, type: 'target' },
+  },
+  'Blizzard': {
+    name: 'Blizzard',
+    type: 'Ice',
+    category: 'Special',
+    power: 110,
+    accuracy: 70,
+    maxPp: 5,
+    description: 'A howling blizzard that sweeps over the foe. Might freeze.',
+    effect: { status: 'Freeze', chance: 0.1, type: 'target' },
+  },
+
+  // Fighting
+  'Close Combat': {
+    name: 'Close Combat',
+    type: 'Fighting',
+    category: 'Physical',
+    power: 120,
+    accuracy: 100,
+    maxPp: 5,
+    description: 'An all-out combat rush. Lowers user\'s Defense and Sp. Def (-1 stage).',
+    effect: { type: 'self', stat: 'defense', stages: -1 }, // We'll double up stat changes programmatically
+  },
+  'Aura Sphere': {
+    name: 'Aura Sphere',
+    type: 'Fighting',
+    category: 'Special',
+    power: 80,
+    accuracy: 100, // Never misses conceptually, perfectly accurate
+    maxPp: 20,
+    description: 'A burst of aura power fired from deep within. Perfect accuracy.',
+  },
+
+  // Poison
+  'Sludge Bomb': {
+    name: 'Sludge Bomb',
+    type: 'Poison',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Infectious sludge is hurled. has a 30% chance to poison.',
+    effect: { status: 'Poison', chance: 0.3, type: 'target' },
+  },
+  'Toxic': {
+    name: 'Toxic',
+    type: 'Poison',
+    category: 'Status',
+    power: 0,
+    accuracy: 90,
+    maxPp: 10,
+    description: 'A severe toxin that poisons the target, dealing damage over time.',
+    effect: { status: 'Poison', chance: 1.0, type: 'target' },
+  },
+
+  // Ground
+  'Earthquake': {
+    name: 'Earthquake',
+    type: 'Ground',
+    category: 'Physical',
+    power: 100,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'A powerful quake that hits everyone on the field.',
+  },
+  'Earth Power': {
+    name: 'Earth Power',
+    type: 'Ground',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Erupts the earth beneath the foe. May lower Sp. Def.',
+  },
+
+  // Flying
+  'Air Slash': {
+    name: 'Air Slash',
+    type: 'Flying',
+    category: 'Special',
+    power: 75,
+    accuracy: 95,
+    maxPp: 15,
+    description: 'A blade of air cuts the sky. Can cause target to flinch (simulated as damage).',
+  },
+  'Hurricane': {
+    name: 'Hurricane',
+    type: 'Flying',
+    category: 'Special',
+    power: 110,
+    accuracy: 70,
+    maxPp: 10,
+    description: 'A massive storm wind that batters the foe.',
+  },
+
+  // Psychic
+  'Psychic': {
+    name: 'Psychic',
+    type: 'Psychic',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'A powerful telekinetic blast. May lower opponent\'s Sp. Def.',
+  },
+  'Calm Mind': {
+    name: 'Calm Mind',
+    type: 'Psychic',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 20,
+    description: 'The user focuses, raising both Sp. Atk and Sp. Def (+1 stage).',
+    effect: { type: 'self', stat: 'spAttack', stages: 1 },
+  },
+
+  // Bug
+  'Bug Buzz': {
+    name: 'Bug Buzz',
+    type: 'Bug',
+    category: 'Special',
+    power: 90,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Vibrates the air around the target, generating high-frequency damage.',
+  },
+  'Quiver Dance': {
+    name: 'Quiver Dance',
+    type: 'Bug',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 20,
+    description: 'A mystical swarm dance that raises Sp. Atk, Sp. Def and Speed (+1 stage).',
+    effect: { type: 'self', stat: 'speed', stages: 1 },
+  },
+
+  // Rock
+  'Stone Edge': {
+    name: 'Stone Edge',
+    type: 'Rock',
+    category: 'Physical',
+    power: 100,
+    accuracy: 80,
+    maxPp: 5,
+    description: 'Shatters the target with sharp rocks. high critical-hit ratio.',
+  },
+  'Rock Slide': {
+    name: 'Rock Slide',
+    type: 'Rock',
+    category: 'Physical',
+    power: 75,
+    accuracy: 90,
+    maxPp: 10,
+    description: 'Large boulders are hurled. Can cause flinching.',
+  },
+
+  // Ghost
+  'Shadow Ball': {
+    name: 'Shadow Ball',
+    type: 'Ghost',
+    category: 'Special',
+    power: 80,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'A dark, shadowy blob is fired. Has a 10% chance to lower Sp. Def.',
+  },
+  'Shadow Claw': {
+    name: 'Shadow Claw',
+    type: 'Ghost',
+    category: 'Physical',
+    power: 70,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'A slash from a sharp dynamic shadow claw.',
+  },
+
+  // Dragon
+  'Dragon Pulse': {
+    name: 'Dragon Pulse',
+    type: 'Dragon',
+    category: 'Special',
+    power: 85,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Fires a shockwave from the user\'s mouth resembling a dragon.',
+  },
+  'Outrage': {
+    name: 'Outrage',
+    type: 'Dragon',
+    category: 'Physical',
+    power: 120,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'The user rampages under lock-in for massive physical damage.',
+  },
+  'Dragon Dance': {
+    name: 'Dragon Dance',
+    type: 'Dragon',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 20,
+    description: 'A vigorous dance that boosts Attack and Speed (+1 stage).',
+    effect: { type: 'self', stat: 'attack', stages: 1 },
+  },
+
+  // Steel
+  'Flash Cannon': {
+    name: 'Flash Cannon',
+    type: 'Steel',
+    category: 'Special',
+    power: 80,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Gathers light energy and projects a metal beam at the target.',
+  },
+  'Iron Defense': {
+    name: 'Iron Defense',
+    type: 'Steel',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Skins up metal armor, sharply raising Defense (+2 stages).',
+    effect: { type: 'self', stat: 'defense', stages: 2 },
+  },
+
+  // Dark
+  'Dark Pulse': {
+    name: 'Dark Pulse',
+    type: 'Dark',
+    category: 'Special',
+    power: 80,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Fires an aura of dark thoughts. Can cause flinching.',
+  },
+  'Nasty Plot': {
+    name: 'Nasty Plot',
+    type: 'Dark',
+    category: 'Status',
+    power: 0,
+    accuracy: 100,
+    maxPp: 20,
+    description: 'Stimulates bad thoughts, sharply raising Sp. Atk (+2 stages).',
+    effect: { type: 'self', stat: 'spAttack', stages: 2 },
+  },
+
+  // Fairy
+  'Moonblast': {
+    name: 'Moonblast',
+    type: 'Fairy',
+    category: 'Special',
+    power: 95,
+    accuracy: 100,
+    maxPp: 15,
+    description: 'Harnesses lunar energy to strike the target. Might lower Sp. Atk.',
+  },
+  'Dazzling Gleam': {
+    name: 'Dazzling Gleam',
+    type: 'Fairy',
+    category: 'Special',
+    power: 80,
+    accuracy: 100,
+    maxPp: 10,
+    description: 'Radiates a dazzling, powerful flash of light.',
+  },
+};
+
+// Instantiates a move with standard PP
+export function getMoveInstance(name: string): Move {
+  const base = MOVES_DATABASE[name];
+  if (!base) {
+    // Fail-safe to standard Body Slam
+    return {
+      name,
+      type: 'Normal',
+      category: 'Physical',
+      power: 60,
+      accuracy: 100,
+      pp: 20,
+      maxPp: 20,
+      description: 'A basic physical strike.',
+    };
+  }
+  return {
+    ...base,
+    pp: base.maxPp,
+  };
+}
