@@ -158,11 +158,11 @@ export function BattleScreen({
         types: template.types,
         maxHp: maxHpScaled,
         hp: maxHpScaled,
-        attack: template.attack,
-        defense: template.defense,
-        spAttack: template.spAttack,
-        spDefense: template.spDefense,
-        speed: template.speed,
+        attack: template.attack * 2 + 5,
+        defense: template.defense * 2 + 5,
+        spAttack: template.spAttack * 2 + 5,
+        spDefense: template.spDefense * 2 + 5,
+        speed: template.speed * 2 + 5,
         moves: template.moves.map(mkey => {
           // get move template
           const dbVal = MOVES_DATABASE[mkey];
@@ -444,6 +444,34 @@ export function BattleScreen({
       attacker.statStages.spDefense = Math.max(-6, attacker.statStages.spDefense - 1);
       moveLogs.push({
         text: `📉 Close Combat recoil! ${attacker.name}'s DEFENSE and SP. DEFENSE fell!`,
+        type: 'stat-change'
+      });
+    }
+
+    // Secondary Dragon Dance boosts Speed
+    if (move.name === 'Dragon Dance') {
+      attacker.statStages.speed = Math.max(-6, Math.min(6, attacker.statStages.speed + 1));
+      moveLogs.push({
+        text: `📈 Dragon Dance grace! ${attacker.name}'s SPEED rose!`,
+        type: 'stat-change'
+      });
+    }
+
+    // Secondary Calm Mind boosts Sp. Defense
+    if (move.name === 'Calm Mind') {
+      attacker.statStages.spDefense = Math.max(-6, Math.min(6, attacker.statStages.spDefense + 1));
+      moveLogs.push({
+        text: `📈 Calm Mind concentration! ${attacker.name}'s SP. DEFENSE rose!`,
+        type: 'stat-change'
+      });
+    }
+
+    // Secondary Quiver Dance boosts Sp. Attack and Sp. Defense
+    if (move.name === 'Quiver Dance') {
+      attacker.statStages.spAttack = Math.max(-6, Math.min(6, attacker.statStages.spAttack + 1));
+      attacker.statStages.spDefense = Math.max(-6, Math.min(6, attacker.statStages.spDefense + 1));
+      moveLogs.push({
+        text: `📈 Quiver Dance magic! ${attacker.name}'s SP. ATTACK and SP. DEFENSE rose!`,
         type: 'stat-change'
       });
     }
