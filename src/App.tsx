@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GamePhase, ActivePokemon, Trainer } from './types';
-import { BOSS_TRAINERS, instantiateBossTeam, CHALLENGE_SETS } from './data/league';
+import { instantiateBossTeam, CHALLENGE_SETS } from './data/league';
 import { createActivePokemon, POKEMON_DATABASE, getPokemonId } from './data/pokemon';
 import { TeamSelector } from './components/TeamSelector';
 import { BattleScreen } from './components/BattleScreen';
@@ -11,7 +11,7 @@ import { audio } from './utils/audio';
 
 export default function App() {
   const [phase, setPhase] = useState<GamePhase>('WELCOME');
-  const [activeSetId, setActiveSetId] = useState<string>('sinnoh');
+  const [activeSetId, setActiveSetId] = useState<string>('classic');
   const [currentStageIdx, setCurrentStageIdx] = useState<number>(0);
   const [playerRoster, setPlayerRoster] = useState<ActivePokemon[]>([]);
   const [showTypeChartHelp, setShowTypeChartHelp] = useState<boolean>(false);
@@ -326,7 +326,7 @@ export default function App() {
               <h3 className="text-xs font-mono text-zinc-500 font-extrabold uppercase tracking-widest mb-4 text-center">
                 Select Your League Challenge
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                 {CHALLENGE_SETS.map((set) => {
                   const isSelected = activeSetId === set.id;
                   return (
@@ -344,7 +344,9 @@ export default function App() {
                         <div className="flex justify-between items-start">
                           <span className={`text-[9px] font-mono font-bold tracking-widest px-2.5 py-0.5 rounded-full border uppercase ${
                             set.id === 'hoenn'
-                              ? 'bg-blue-950/50 border-blue-900 text-blue-400'
+                              ? 'bg-cyan-950/50 border-cyan-900 text-cyan-400'
+                              : set.id === 'sinnoh'
+                              ? 'bg-purple-950/50 border-purple-900 text-purple-400'
                               : 'bg-red-950/50 border-red-900 text-red-400'
                           }`}>
                             {set.region} Region
@@ -614,7 +616,7 @@ export default function App() {
                 LEAGUE CHAMPION
               </h1>
               <p className="text-xs md:text-sm text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-                Your tactical genius and sync partner bonds have conquered {currentSet.trainers.length} consecutive high-tier trainer matches, beating the regional Elite Four and {activeSetId === 'hoenn' ? 'Champions Steven & Wallace' : 'Champion Cynthia herself'}!
+                Your tactical genius and sync partner bonds have conquered {currentSet.trainers.length} consecutive high-tier trainer matches, beating the regional Elite Four and {activeSetId === 'hoenn' ? 'Champions Steven & Wallace' : activeSetId === 'classic' ? 'Champion Blue himself' : 'Champion Cynthia herself'}!
               </p>
             </div>
 
