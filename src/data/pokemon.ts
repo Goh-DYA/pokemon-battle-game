@@ -452,7 +452,11 @@ export const PREBUILT_TEAMS = [
 ];
 
 export function getPokemonId(name: string): number {
-  const clean = name.replace(/\(.*?\)/g, "").replace("-", "").trim().split(' ')[0].trim();
+  let clean = name.replace(/\(.*?\)/g, "").trim();
+  if (clean.toLowerCase().endsWith(" ace")) {
+    clean = clean.substring(0, clean.length - 4).trim();
+  }
+  clean = clean.replace("-", "").trim();
   const POKEMON_IDS: Record<string, number> = {
     'Charizard': 6,
     'Blastoise': 9,
