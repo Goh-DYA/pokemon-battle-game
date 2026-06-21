@@ -16,6 +16,8 @@ interface BattleScreenProps {
   onBackToLobby: () => void;
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export function BattleScreen({
   trainer,
   initialPlayerTeam,
@@ -61,6 +63,7 @@ export function BattleScreen({
   const [playerAnim, setPlayerAnim] = useState<'idle' | 'attack' | 'hit' | 'hit-super' | 'faint' | 'switch'>('idle');
   const [opponentAnim, setOpponentAnim] = useState<'idle' | 'attack' | 'hit' | 'hit-super' | 'faint' | 'switch'>('idle');
   const [arenaShake, setArenaShake] = useState<boolean>(false);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   // Sync SFX sounds to Player State Animations
   useEffect(() => {
@@ -200,9 +203,10 @@ export function BattleScreen({
   };
 
   // Switch player pokemon
-  const executePlayerSwitch = (targetIdx: number) => {
-    if (playerTeam[targetIdx].hp <= 0) return;
+  const executePlayerSwitch = async (targetIdx: number) => {
+    if (playerTeam[targetIdx].hp <= 0 || isAnimating) return;
 
+    setIsAnimating(true);
     const oldName = activePlayer.name;
     const newName = playerTeam[targetIdx].name;
 
@@ -218,21 +222,22 @@ export function BattleScreen({
     setIsSwitchingOpen(false);
 
     setPlayerAnim('switch');
-    setTimeout(() => {
-      setPlayerAnim('idle');
-    }, 400);
+    setLogs(prev => [...prev, { id: makeId(), text: `🔄 Player withdrew ${oldName} and sent out ${newName}!`, type: 'system' }]);
 
-    addLog(`🔄 Player withdrew ${oldName} and sent out ${newName}!`, 'system');
+    await sleep(500);
+    setPlayerAnim('idle');
 
     // If it was a forced switch because of faint, turn ends immediately and opponent doesn't attack
     if (isForceSwitching) {
       setIsForceSwitching(false);
-      addLog(`🛡️ ${newName} entered the field ready for battle!`, 'system');
+      setLogs(prev => [...prev, { id: makeId(), text: `🛡️ ${newName} entered the field ready for battle!`, type: 'system' }]);
+      setIsAnimating(false);
       return;
     }
 
     // Otherwise, opponent gets a free turn since switching took player's turn priority!
-    executeOpponentTurnOnly(targetIdx);
+    await executeOpponentTurnOnlyAsync(targetIdx, false);
+    setIsAnimating(false);
   };
 
   // Generate flavorful description of the move clash
@@ -312,297 +317,70 @@ export function BattleScreen({
     }
   };
 
-  // Perform a full combat round (Both player and opponent move)
-  const executeCombatRound = (playerMove: Move) => {
-    if (battleEnded || isForceSwitching) return;
+  interface CombatContext {
+    localPlayerTeam: ActivePokemon[];
+    localOpponentTeam: ActivePokemon[];
+    localActivePlayerIdx: number;
+    localActiveOpponentIdx: number;
+    commit: (newLogs?: { text: string; type: BattleLog['type'] }[]) => void;
+  }
 
-    // AI chooses action
-    const aiAction = chooseAIChoice();
-    const updatedPlayerTeam = [...playerTeam];
-    const updatedOpponentTeam = [...opponentTeam];
-
-    let currentP = { ...activePlayer };
-    let currentO = { ...activeOpponent };
-
-    const logsToAdd: { text: string; type: BattleLog['type'] }[] = [];
-
-    // Step 1: Handle PP usage
-    const moveIdx = currentP.moves.findIndex(m => m.name === playerMove.name);
-    if (moveIdx !== -1) {
-      const pm = { ...currentP.moves[moveIdx] };
-      pm.pp = Math.max(0, pm.pp - 1);
-      currentP.moves[moveIdx] = pm;
-    }
-
-    // Step 2: Determine Speed and turn order
-    const pSpeed = getModifiedSpeed(currentP);
-    const oSpeed = getModifiedSpeed(currentO);
-
-    let playerFirst = pSpeed >= oSpeed;
-    if (pSpeed === oSpeed) {
-      playerFirst = Math.random() < 0.5; // speed tiebreaker
-    }
-
-    // If opponent is switching out
-    if (aiAction.type === 'switch') {
-      const oldName = currentO.name;
-      const targetIdx = aiAction.switchTargetIdx!;
-      currentO.statStages = { attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 };
-      updatedOpponentTeam[activeOpponentIdx] = currentO;
-      
-      const newActive = updatedOpponentTeam[targetIdx];
-      setActiveOpponentIdx(targetIdx);
-      currentO = newActive;
-      
-      logsToAdd.push({
-        text: `🔄 ${trainer.name} recalled ${oldName} and sent out ${currentO.name}!`,
-        type: 'system'
-      });
-
-      setOpponentAnim('switch');
-      setTimeout(() => {
-        setOpponentAnim('idle');
-      }, 500);
-
-      // Player attacks the newly switched in opponent since player gets their move
-      const dmgDetail = calculateDamage(currentP, currentO, playerMove);
-      executeAttackCalculations(currentP, currentO, playerMove, dmgDetail, logsToAdd);
-
-      setTimeout(() => {
-        setPlayerAnim('attack');
-        setTimeout(() => {
-          setPlayerAnim('idle');
-          const isSuper = dmgDetail.effectiveness > 1;
-          setOpponentAnim(isSuper ? 'hit-super' : 'hit');
-          if (isSuper) {
-            setArenaShake(true);
-            setTimeout(() => setArenaShake(false), 500);
-          }
-          setTimeout(() => { setOpponentAnim('idle'); }, isSuper ? 500 : 400);
-        }, 300);
-      }, 500);
-    } 
-    // If opponent uses item / Potion
-    else if (aiAction.type === 'item') {
-      playHeal();
-      const healedAmt = Math.round(currentO.maxHp * 0.5);
-      currentO.hp = Math.min(currentO.maxHp, currentO.hp + healedAmt);
-      setEnemyPotionUsed(true);
-      
-      logsToAdd.push({
-        text: `🧪 ${trainer.name} sprayed an ultra-potent Max Potion! ${currentO.name} healed for ${healedAmt} HP!`,
-        type: 'heal'
-      });
-
-      // Player attacks since items have low priority
-      const dmgDetail = calculateDamage(currentP, currentO, playerMove);
-      executeAttackCalculations(currentP, currentO, playerMove, dmgDetail, logsToAdd);
-
-      setTimeout(() => {
-        setPlayerAnim('attack');
-        setTimeout(() => {
-          setPlayerAnim('idle');
-          const isSuper = dmgDetail.effectiveness > 1;
-          setOpponentAnim(isSuper ? 'hit-super' : 'hit');
-          if (isSuper) {
-            setArenaShake(true);
-            setTimeout(() => setArenaShake(false), 500);
-          }
-          setTimeout(() => { setOpponentAnim('idle'); }, isSuper ? 500 : 400);
-        }, 300);
-      }, 300);
-    }
-    // Normal turns where both attack!
-    else {
-      const opponentMove = aiAction.selectedMove!;
-
-      if (playerFirst) {
-        // Player moves first
-        let canActivePAttack = checkStatusBlockAction(currentP, logsToAdd);
-        if (canActivePAttack) {
-          const dmg = calculateDamage(currentP, currentO, playerMove);
-          executeAttackCalculations(currentP, currentO, playerMove, dmg, logsToAdd);
-          
-          setPlayerAnim('attack');
-          setTimeout(() => {
-            setPlayerAnim('idle');
-            const isSuper = dmg.effectiveness > 1;
-            setOpponentAnim(isSuper ? 'hit-super' : 'hit');
-            if (isSuper) {
-              setArenaShake(true);
-              setTimeout(() => setArenaShake(false), 500);
-            }
-            setTimeout(() => { setOpponentAnim('idle'); }, isSuper ? 500 : 400);
-          }, 300);
-        }
-
-        // If opponent is still alive, they attack back!
-        if (currentO.hp > 0) {
-          let canActiveOAttack = checkStatusBlockAction(currentO, logsToAdd);
-          if (canActiveOAttack) {
-            const dmg = calculateDamage(currentO, currentP, opponentMove);
-            executeAttackCalculations(currentO, currentP, opponentMove, dmg, logsToAdd);
-            
-            setTimeout(() => {
-              setOpponentAnim('attack');
-              setTimeout(() => {
-                setOpponentAnim('idle');
-                const isSuper = dmg.effectiveness > 1;
-                setPlayerAnim(isSuper ? 'hit-super' : 'hit');
-                if (isSuper) {
-                  setArenaShake(true);
-                  setTimeout(() => setArenaShake(false), 500);
-                }
-                setTimeout(() => { setPlayerAnim('idle'); }, isSuper ? 500 : 400);
-              }, 300);
-            }, canActivePAttack ? 800 : 0);
-          }
-        }
-      } else {
-        // Opponent moves first
-        let canActiveOAttack = checkStatusBlockAction(currentO, logsToAdd);
-        if (canActiveOAttack) {
-          const dmg = calculateDamage(currentO, currentP, opponentMove);
-          executeAttackCalculations(currentO, currentP, opponentMove, dmg, logsToAdd);
-          
-          setOpponentAnim('attack');
-          setTimeout(() => {
-            setOpponentAnim('idle');
-            const isSuper = dmg.effectiveness > 1;
-            setPlayerAnim(isSuper ? 'hit-super' : 'hit');
-            if (isSuper) {
-              setArenaShake(true);
-              setTimeout(() => setArenaShake(false), 500);
-            }
-            setTimeout(() => { setPlayerAnim('idle'); }, isSuper ? 500 : 400);
-          }, 300);
-        }
-
-        // If player is still alive, player attacks back!
-        if (currentP.hp > 0) {
-          let canActivePAttack = checkStatusBlockAction(currentP, logsToAdd);
-          if (canActivePAttack) {
-            const dmg = calculateDamage(currentP, currentO, playerMove);
-            executeAttackCalculations(currentP, currentO, playerMove, dmg, logsToAdd);
-            
-            setTimeout(() => {
-              setPlayerAnim('attack');
-              setTimeout(() => {
-                setPlayerAnim('idle');
-                const isSuper = dmg.effectiveness > 1;
-                setOpponentAnim(isSuper ? 'hit-super' : 'hit');
-                if (isSuper) {
-                  setArenaShake(true);
-                  setTimeout(() => setArenaShake(false), 500);
-                }
-                setTimeout(() => { setOpponentAnim('idle'); }, isSuper ? 500 : 400);
-              }, 300);
-            }, canActiveOAttack ? 800 : 0);
-          }
-        }
-      }
-    }
-
-    // Step 3: End of turn status damage (poison, burn)
-    applyEndOfTurnStatusDamage(currentP, logsToAdd);
-    applyEndOfTurnStatusDamage(currentO, logsToAdd);
-
-    // Apply state changes
-    updatedPlayerTeam[activePlayerIdx] = currentP;
-    updatedOpponentTeam[activeOpponentIdx] = currentO;
-
-    setPlayerTeam(updatedPlayerTeam);
-    setOpponentTeam(updatedOpponentTeam);
-
-    // Append logs
-    setLogs(prev => [...prev, ...logsToAdd.map(l => ({ id: makeId(), text: l.text, type: l.type }))]);
-
-    // Check faints and overall completion
-    checkTurnEndFaints(currentP, currentO, updatedPlayerTeam, updatedOpponentTeam);
-  };
-
-  // Helper: opponent free attack when player switched out manually
-  const executeOpponentTurnOnly = (pActiveIdx: number) => {
-    const updatedOpponentTeam = [...opponentTeam];
-    const updatedPlayerTeam = [...playerTeam];
-    
-    let currentP = { ...updatedPlayerTeam[pActiveIdx] };
-    let currentO = { ...activeOpponent };
-
-    const logsToAdd: { text: string; type: BattleLog['type'] }[] = [];
-
-    // AI actions
-    const aiAction = chooseAIChoice();
-    if (aiAction.type === 'move') {
-      const opponentMove = aiAction.selectedMove!;
-      let canActiveOAttack = checkStatusBlockAction(currentO, logsToAdd);
-      if (canActiveOAttack) {
-        const dmg = calculateDamage(currentO, currentP, opponentMove);
-        executeAttackCalculations(currentO, currentP, opponentMove, dmg, logsToAdd);
-
-        setOpponentAnim('attack');
-        setTimeout(() => {
-          setOpponentAnim('idle');
-          const isSuper = dmg.effectiveness > 1;
-          setPlayerAnim(isSuper ? 'hit-super' : 'hit');
-          if (isSuper) {
-            setArenaShake(true);
-            setTimeout(() => setArenaShake(false), 500);
-          }
-          setTimeout(() => { setPlayerAnim('idle'); }, isSuper ? 500 : 400);
-        }, 300);
-      }
-    }
-
-    applyEndOfTurnStatusDamage(currentP, logsToAdd);
-    applyEndOfTurnStatusDamage(currentO, logsToAdd);
-
-    updatedOpponentTeam[activeOpponentIdx] = currentO;
-    updatedPlayerTeam[pActiveIdx] = currentP;
-
-    setPlayerTeam(updatedPlayerTeam);
-    setOpponentTeam(updatedOpponentTeam);
-    setLogs(prev => [...prev, ...logsToAdd.map(l => ({ id: makeId(), text: l.text, type: l.type }))]);
-
-    checkTurnEndFaints(currentP, currentO, updatedPlayerTeam, updatedOpponentTeam);
-  };
-
-  // Status effect: check if Pokémon is Paralyzed or Asleep and block turn
-  const checkStatusBlockAction = (poke: ActivePokemon, logsToAppend: any[]): boolean => {
-    if (poke.status === 'Paralysis') {
-      if (Math.random() < 0.25) {
-        logsToAppend.push({
-          text: `⚡ ${poke.name} is fully paralyzed! It cannot execute its attack!`,
-          type: 'status'
-        });
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Handles HP changes, stat boosts, status adjustments, and flavor logs
-  const executeAttackCalculations = (
-    attacker: ActivePokemon,
-    defender: ActivePokemon,
+  const performAttack = async (
+    attackerIsPlayer: boolean,
     move: Move,
-    result: { damage: number; isCrit: boolean; effectiveness: number; isStab: boolean },
-    logsToAppend: any[]
+    ctx: CombatContext
   ) => {
-    // 1. Logs Move action
+    let attacker = attackerIsPlayer ? ctx.localPlayerTeam[ctx.localActivePlayerIdx] : ctx.localOpponentTeam[ctx.localActiveOpponentIdx];
+    let defender = attackerIsPlayer ? ctx.localOpponentTeam[ctx.localActiveOpponentIdx] : ctx.localPlayerTeam[ctx.localActivePlayerIdx];
+
+    if (attacker.hp <= 0 || defender.hp <= 0) return;
+
+    const logsToAppend: { text: string; type: BattleLog['type'] }[] = [];
+
+    // Check status condition paralysis/sleep etc.
+    let canAttack = checkStatusBlockAction(attacker, logsToAppend);
+    if (!canAttack) {
+      ctx.commit(logsToAppend);
+      await sleep(600);
+      return;
+    }
+
+    // Log the move call immediately
     logsToAppend.push({
       text: `⚔️ ${attacker.name} called ${move.name}!`,
       type: 'action'
     });
+    ctx.commit(logsToAppend);
 
-    // 2. Base flavor description
+    // Start attacker animation
+    if (attackerIsPlayer) {
+      setPlayerAnim('attack');
+    } else {
+      setOpponentAnim('attack');
+    }
+
+    // Wait for attack animation strike (about 300ms)
+    await sleep(300);
+
+    // Reset attacker animation to idle
+    if (attackerIsPlayer) {
+      setPlayerAnim('idle');
+    } else {
+      setOpponentAnim('idle');
+    }
+
+    // Calculate damage and other effects
+    const result = calculateDamage(attacker, defender, move);
+    const moveLogs: { text: string; type: BattleLog['type'] }[] = [];
+
+    // Flavor text
     const flavor = generateFlavorText(attacker.name, defender.name, move, result);
-    logsToAppend.push({ text: flavor, type: result.effectiveness > 1 ? 'super-effective' : result.effectiveness === 0 ? 'ineffective' : 'damage' });
+    moveLogs.push({ text: flavor, type: result.effectiveness > 1 ? 'super-effective' : result.effectiveness === 0 ? 'ineffective' : 'damage' });
 
-    // 3. Subtract HP if offensive
+    // Apply damage
     if (move.power > 0) {
       defender.hp = Math.max(0, defender.hp - result.damage);
-      logsToAppend.push({
+      moveLogs.push({
         text: `💥 ${defender.name} lost ${result.damage} HP (${Math.round((result.damage / defender.maxHp) * 100)}%).`,
         type: 'damage'
       });
@@ -611,24 +389,21 @@ export function BattleScreen({
       if (move.effect?.hasRecover) {
         const drained = Math.round(result.damage * 0.5);
         attacker.hp = Math.min(attacker.maxHp, attacker.hp + drained);
-        logsToAppend.push({
+        moveLogs.push({
           text: `🌱 ${attacker.name} drained strength and restored ${drained} HP!`,
           type: 'heal'
         });
       }
-    }
-
-    // 4. Handle non-damage Recover moves
-    else if (move.effect?.hasRecover) {
+    } else if (move.effect?.hasRecover) {
       const restoreAmount = Math.round(attacker.maxHp * 0.5);
       attacker.hp = Math.min(attacker.maxHp, attacker.hp + restoreAmount);
-      logsToAppend.push({
+      moveLogs.push({
         text: `➕ ${attacker.name} restored ${restoreAmount} HP!`,
         type: 'heal'
       });
     }
 
-    // 5. Handle stat modifications
+    // Handle stat modifications
     if (move.effect?.stat) {
       const statName = move.effect.stat;
       const stages = move.effect.stages || 0;
@@ -644,7 +419,7 @@ export function BattleScreen({
       const scaleDropWord = Math.abs(stages) >= 2 ? 'sharply fell...' : 'fell...';
       const changeWord = stages > 0 ? scaleWord : scaleDropWord;
 
-      logsToAppend.push({
+      moveLogs.push({
         text: `📈 ${target.name}'s ${statName.toUpperCase()} ${changeWord} (Stage ${nextStage > 0 ? '+' : ''}${nextStage})`,
         type: 'stat-change'
       });
@@ -654,31 +429,30 @@ export function BattleScreen({
     if (move.name === 'Close Combat') {
       attacker.statStages.defense = Math.max(-6, attacker.statStages.defense - 1);
       attacker.statStages.spDefense = Math.max(-6, attacker.statStages.spDefense - 1);
-      logsToAppend.push({
+      moveLogs.push({
         text: `📉 Close Combat recoil! ${attacker.name}'s DEFENSE and SP. DEFENSE fell!`,
         type: 'stat-change'
       });
     }
 
-    // 6. Handle Status conditions inflations
+    // Handle Status conditions inflations
     if (move.effect?.status && defender.hp > 0) {
       const chance = move.effect.chance || 1.0;
       if (Math.random() <= chance) {
         if (defender.status === 'Healthy') {
-          // Check type immunities (e.g. Fire type cannot be Burned, Poison type cannot be Poisoned)
           const condition = move.effect.status;
           const isImmune = (condition === 'Burn' && defender.types.includes('Fire')) ||
                            (condition === 'Poison' && (defender.types.includes('Poison') || defender.types.includes('Steel')));
 
           if (isImmune) {
-            logsToAppend.push({
+            moveLogs.push({
               text: `🛡️ ${defender.name} is immune to ${condition}!`,
               type: 'system'
             });
           } else {
             defender.status = condition;
             const sym = condition === 'Burn' ? '🔥' : condition === 'Paralysis' ? '⚡' : '☣️';
-            logsToAppend.push({
+            moveLogs.push({
               text: `${sym} ${defender.name} was inflicted with ${condition.toUpperCase()}!`,
               type: 'status'
             });
@@ -686,11 +460,43 @@ export function BattleScreen({
         }
       }
     }
+
+    // Now trigger the hit animation on the defender
+    const isSuper = result.effectiveness > 1;
+    if (attackerIsPlayer) {
+      setOpponentAnim(isSuper ? 'hit-super' : 'hit');
+    } else {
+      setPlayerAnim(isSuper ? 'hit-super' : 'hit');
+    }
+
+    if (isSuper) {
+      setArenaShake(true);
+      setTimeout(() => setArenaShake(false), 500);
+    }
+
+    // Update state with new HP, stat modifications, etc.
+    ctx.commit(moveLogs);
+
+    // Wait for hit animation to play
+    await sleep(isSuper ? 500 : 400);
+
+    // Reset hit animation
+    if (attackerIsPlayer) {
+      setOpponentAnim('idle');
+    } else {
+      setPlayerAnim('idle');
+    }
   };
 
-  // Poison / Burn updates at the end of the combat round
-  const applyEndOfTurnStatusDamage = (poke: ActivePokemon, logsToAppend: any[]) => {
+  const applyEndOfTurnStatusDamageAsync = async (
+    pokeIsPlayer: boolean,
+    ctx: CombatContext
+  ) => {
+    let poke = pokeIsPlayer ? ctx.localPlayerTeam[ctx.localActivePlayerIdx] : ctx.localOpponentTeam[ctx.localActiveOpponentIdx];
     if (poke.hp <= 0) return;
+
+    const logsToAppend: { text: string; type: BattleLog['type'] }[] = [];
+    let damaged = false;
 
     if (poke.status === 'Poison') {
       const poisonDmg = Math.round(poke.maxHp / 8);
@@ -699,6 +505,7 @@ export function BattleScreen({
         text: `☣️ ${poke.name} takes damage from Poison! (-${poisonDmg} HP)`,
         type: 'damage'
       });
+      damaged = true;
     } else if (poke.status === 'Burn') {
       const burnDmg = Math.round(poke.maxHp / 16);
       poke.hp = Math.max(0, poke.hp - burnDmg);
@@ -706,58 +513,270 @@ export function BattleScreen({
         text: `🔥 ${poke.name} takes damage from its Burn! (-${burnDmg} HP)`,
         type: 'damage'
       });
+      damaged = true;
+    }
+
+    if (damaged) {
+      if (pokeIsPlayer) {
+        setPlayerAnim('hit');
+      } else {
+        setOpponentAnim('hit');
+      }
+
+      ctx.commit(logsToAppend);
+      await sleep(400);
+
+      if (pokeIsPlayer) {
+        setPlayerAnim('idle');
+      } else {
+        setOpponentAnim('idle');
+      }
     }
   };
 
-  // Check faints and transition replacement frames
-  const checkTurnEndFaints = (
-    currentP: ActivePokemon,
-    currentO: ActivePokemon,
-    uPlayerTeam: ActivePokemon[],
-    uOpponentTeam: ActivePokemon[]
+  const checkTurnEndFaintsAsync = async (
+    ctx: CombatContext
   ) => {
+    let currentP = ctx.localPlayerTeam[ctx.localActivePlayerIdx];
+    let currentO = ctx.localOpponentTeam[ctx.localActiveOpponentIdx];
+
     // 1. Did player's active pokemon faint?
-    if (currentP.hp <= 0) {
+    if (currentP.hp <= 0 && playerAnim !== 'faint') {
       setPlayerAnim('faint');
-      addLog(`💀 ${currentP.name} has fainted!`, 'faint');
-      
-      const hasAliveLeft = uPlayerTeam.some(p => p.hp > 0);
+      const faintLogs = [{ text: `💀 ${currentP.name} has fainted!`, type: 'faint' as const }];
+      ctx.commit(faintLogs);
+      await sleep(500);
+
+      const hasAliveLeft = ctx.localPlayerTeam.some(p => p.hp > 0);
       if (!hasAliveLeft) {
-        // Complete Defeat!
         setBattleWinner('opponent');
         setBattleEnded(true);
-        addLog(`😭 All of your partners have fainted! You lost the match to ${trainer.name}...`, 'system');
-        return;
+        const defeatLogs = [{ text: `😭 All of your partners have fainted! You lost the match to ${trainer.name}...`, type: 'system' as const }];
+        ctx.commit(defeatLogs);
+        return true; // battle ended
       } else {
-        // Switch required before player can take moves
         setIsForceSwitching(true);
         setIsSwitchingOpen(true);
-        addLog(`⚠️ You must switch out to an active Pokémon to continue battling!`, 'system');
+        const switchLogs = [{ text: `⚠️ You must switch out to an active Pokémon to continue battling!`, type: 'system' as const }];
+        ctx.commit(switchLogs);
+        return true; // halted, must switch
       }
     }
 
     // 2. Did opponent's active pokemon faint?
-    if (currentO.hp <= 0) {
+    if (currentO.hp <= 0 && opponentAnim !== 'faint') {
       setOpponentAnim('faint');
-      addLog(`💥 ${trainer.name}'s ${currentO.name} has fainted!`, 'faint');
+      const faintLogs = [{ text: `💥 ${trainer.name}'s ${currentO.name} has fainted!`, type: 'faint' as const }];
+      ctx.commit(faintLogs);
+      await sleep(500);
 
-      const aliveEnemyIdx = uOpponentTeam.findIndex(p => p.hp > 0);
+      const aliveEnemyIdx = ctx.localOpponentTeam.findIndex(p => p.hp > 0);
       if (aliveEnemyIdx === -1) {
-        // Complete Victory!
         setBattleWinner('player');
         setBattleEnded(true);
-        addLog(`🎉 VICTORY! You defeated all 6 of ${trainer.name}'s Pokémon!`, 'system');
-        addLog(`💬 ${trainer.name}: "${trainer.dialogue.defeat}"`, 'status');
-        return;
+        const victoryLogs = [
+          { text: `🎉 VICTORY! You defeated all 6 of ${trainer.name}'s Pokémon!`, type: 'system' as const },
+          { text: `💬 ${trainer.name}: "${trainer.dialogue.defeat}"`, type: 'status' as const }
+        ];
+        ctx.commit(victoryLogs);
+        return true; // battle ended
       } else {
-        // Opponent switches to next available pokemon immediately
-        const nextOpponent = uOpponentTeam[aliveEnemyIdx];
-        setActiveOpponentIdx(aliveEnemyIdx);
+        ctx.localActiveOpponentIdx = aliveEnemyIdx;
         setOpponentAnim('switch');
-        setTimeout(() => setOpponentAnim('idle'), 500);
-        addLog(`🔴 ${trainer.name} sent out ${nextOpponent.name}!`, 'action');
+        const nextOpponent = ctx.localOpponentTeam[aliveEnemyIdx];
+        const switchLogs = [{ text: `🔴 ${trainer.name} sent out ${nextOpponent.name}!`, type: 'action' as const }];
+        ctx.commit(switchLogs);
+        await sleep(500);
+        setOpponentAnim('idle');
       }
     }
+    return false;
+  };
+
+  // Perform a full combat round (Both player and opponent move)
+  const executeCombatRound = async (playerMove: Move) => {
+    if (battleEnded || isForceSwitching || isAnimating) return;
+
+    setIsAnimating(true);
+
+    // Create local copies to track states during async steps
+    let localPlayerTeam = playerTeam.map(p => ({
+      ...p,
+      statStages: { ...p.statStages },
+      moves: p.moves.map(m => ({ ...m })),
+    }));
+    let localOpponentTeam = opponentTeam.map(p => ({
+      ...p,
+      statStages: { ...p.statStages },
+      moves: p.moves.map(m => ({ ...m })),
+    }));
+
+    const ctx = {
+      localPlayerTeam,
+      localOpponentTeam,
+      localActivePlayerIdx: activePlayerIdx,
+      localActiveOpponentIdx: activeOpponentIdx,
+      commit: (newLogs: { text: string; type: BattleLog['type'] }[] = []) => {
+        setPlayerTeam([...ctx.localPlayerTeam]);
+        setOpponentTeam([...ctx.localOpponentTeam]);
+        setActivePlayerIdx(ctx.localActivePlayerIdx);
+        setActiveOpponentIdx(ctx.localActiveOpponentIdx);
+        if (newLogs.length > 0) {
+          setLogs(prev => [...prev, ...newLogs.map(l => ({ id: makeId(), text: l.text, type: l.type }))]);
+        }
+      }
+    };
+
+    // 1. Decrement PP of player move
+    let currentP = ctx.localPlayerTeam[ctx.localActivePlayerIdx];
+    const moveIdx = currentP.moves.findIndex(m => m.name === playerMove.name);
+    if (moveIdx !== -1) {
+      currentP.moves[moveIdx].pp = Math.max(0, currentP.moves[moveIdx].pp - 1);
+    }
+    ctx.commit();
+
+    // AI Action choice
+    const aiAction = chooseAIChoice();
+
+    // 2. Turn priorities
+    // If opponent is switching out
+    if (aiAction.type === 'switch') {
+      const targetIdx = aiAction.switchTargetIdx!;
+      let oldO = ctx.localOpponentTeam[ctx.localActiveOpponentIdx];
+      oldO.statStages = { attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 };
+      
+      const switchLogs = [{
+        text: `🔄 ${trainer.name} recalled ${oldO.name} and sent out ${ctx.localOpponentTeam[targetIdx].name}!`,
+        type: 'system' as const
+      }];
+      
+      ctx.localActiveOpponentIdx = targetIdx;
+      setOpponentAnim('switch');
+      ctx.commit(switchLogs);
+      
+      await sleep(500);
+      setOpponentAnim('idle');
+
+      // Player attacks the newly switched in opponent
+      await performAttack(true, playerMove, ctx);
+    }
+    // If opponent uses item / Potion
+    else if (aiAction.type === 'item') {
+      playHeal();
+      let currentO = ctx.localOpponentTeam[ctx.localActiveOpponentIdx];
+      const healedAmt = Math.round(currentO.maxHp * 0.5);
+      currentO.hp = Math.min(currentO.maxHp, currentO.hp + healedAmt);
+      setEnemyPotionUsed(true);
+
+      const healLogs = [{
+        text: `🧪 ${trainer.name} sprayed an ultra-potent Max Potion! ${currentO.name} healed for ${healedAmt} HP!`,
+        type: 'heal' as const
+      }];
+      ctx.commit(healLogs);
+
+      await sleep(600);
+
+      // Player attacks
+      await performAttack(true, playerMove, ctx);
+    }
+    // Normal turns where both attack
+    else {
+      const opponentMove = aiAction.selectedMove!;
+      
+      // Determine turn order
+      const pSpeed = getModifiedSpeed(ctx.localPlayerTeam[ctx.localActivePlayerIdx]);
+      const oSpeed = getModifiedSpeed(ctx.localOpponentTeam[ctx.localActiveOpponentIdx]);
+      let playerFirst = pSpeed >= oSpeed;
+      if (pSpeed === oSpeed) {
+        playerFirst = Math.random() < 0.5;
+      }
+
+      if (playerFirst) {
+        // Player moves first
+        await performAttack(true, playerMove, ctx);
+
+        // Check if opponent fainted, if so skip their attack
+        if (ctx.localOpponentTeam[ctx.localActiveOpponentIdx].hp > 0) {
+          await performAttack(false, opponentMove, ctx);
+        }
+      } else {
+        // Opponent moves first
+        await performAttack(false, opponentMove, ctx);
+
+        // Check if player fainted, if so skip their attack
+        if (ctx.localPlayerTeam[ctx.localActivePlayerIdx].hp > 0) {
+          await performAttack(true, playerMove, ctx);
+        }
+      }
+    }
+
+    // Step 3: End of turn status damage (poison, burn)
+    await applyEndOfTurnStatusDamageAsync(true, ctx);
+    await applyEndOfTurnStatusDamageAsync(false, ctx);
+
+    // Check faints and overall completion
+    await checkTurnEndFaintsAsync(ctx);
+
+    setIsAnimating(false);
+  };
+
+  const executeOpponentTurnOnlyAsync = async (newPlayerIdx: number, manageLock = true) => {
+    if (manageLock) setIsAnimating(true);
+
+    let localPlayerTeam = playerTeam.map(p => ({
+      ...p,
+      statStages: { ...p.statStages },
+      moves: p.moves.map(m => ({ ...m })),
+    }));
+    let localOpponentTeam = opponentTeam.map(p => ({
+      ...p,
+      statStages: { ...p.statStages },
+      moves: p.moves.map(m => ({ ...m })),
+    }));
+
+    const ctx = {
+      localPlayerTeam,
+      localOpponentTeam,
+      localActivePlayerIdx: newPlayerIdx,
+      localActiveOpponentIdx: activeOpponentIdx,
+      commit: (newLogs: { text: string; type: BattleLog['type'] }[] = []) => {
+        setPlayerTeam([...ctx.localPlayerTeam]);
+        setOpponentTeam([...ctx.localOpponentTeam]);
+        setActivePlayerIdx(ctx.localActivePlayerIdx);
+        setActiveOpponentIdx(ctx.localActiveOpponentIdx);
+        if (newLogs.length > 0) {
+          setLogs(prev => [...prev, ...newLogs.map(l => ({ id: makeId(), text: l.text, type: l.type }))]);
+        }
+      }
+    };
+
+    const aiAction = chooseAIChoice();
+    if (aiAction.type === 'move') {
+      const opponentMove = aiAction.selectedMove!;
+      await performAttack(false, opponentMove, ctx);
+    }
+
+    // End of turn status damage
+    await applyEndOfTurnStatusDamageAsync(true, ctx);
+    await applyEndOfTurnStatusDamageAsync(false, ctx);
+
+    // Check faints
+    await checkTurnEndFaintsAsync(ctx);
+
+    if (manageLock) setIsAnimating(false);
+  };
+
+  const checkStatusBlockAction = (poke: ActivePokemon, logsToAppend: any[]): boolean => {
+    if (poke.status === 'Paralysis') {
+      if (Math.random() < 0.25) {
+        logsToAppend.push({
+          text: `⚡ ${poke.name} is fully paralyzed! It cannot execute its attack!`,
+          type: 'status'
+        });
+        return false;
+      }
+    }
+    return true;
   };
 
   // AI Decision Tree calculations
@@ -828,9 +847,10 @@ export function BattleScreen({
   };
 
   // Player manual potion usage
-  const executePlayerPotion = () => {
-    if (playerPotionsLeft <= 0 || activePlayer.hp <= 0 || battleEnded) return;
+  const executePlayerPotion = async () => {
+    if (playerPotionsLeft <= 0 || activePlayer.hp <= 0 || battleEnded || isAnimating) return;
 
+    setIsAnimating(true);
     playHeal();
     setPlayerPotionsLeft(prev => prev - 1);
     const healAmt = Math.round(activePlayer.maxHp * 0.5);
@@ -842,10 +862,13 @@ export function BattleScreen({
     };
 
     setPlayerTeam(updatedTeam);
-    addLog(`🧪 You sprayed a Max Potion! ${activePlayer.name} healed for ${healAmt} HP!`, 'heal');
+    setLogs(prev => [...prev, { id: makeId(), text: `🧪 You sprayed a Max Potion! ${activePlayer.name} healed for ${healAmt} HP!`, type: 'heal' }]);
+
+    await sleep(600);
 
     // opponent gets a turn since using item consumes turn priority
-    executeOpponentTurnOnly(activePlayerIdx);
+    await executeOpponentTurnOnlyAsync(activePlayerIdx, false);
+    setIsAnimating(false);
   };
 
   // Keyboard/Terminal actions input executor
@@ -854,7 +877,7 @@ export function BattleScreen({
     const command = terminalInput.trim();
     setTerminalInput('');
 
-    if (battleEnded || isForceSwitching) return;
+    if (battleEnded || isForceSwitching || isAnimating) return;
 
     if (command === '5') {
       setIsSwitchingOpen(true);
@@ -1135,15 +1158,15 @@ export function BattleScreen({
             {!isSwitchingOpen && (
               <div className="grid grid-cols-2 gap-3" id="actions-options-grid">
                 {activePlayer.moves.map((move, idx) => {
-                  const noPPLeft = move.pp <= 0;
+                  const isDisabled = move.pp <= 0 || isAnimating;
                   return (
                     <button
                       key={move.name}
                       id={`btn-skill-${move.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      disabled={noPPLeft}
+                      disabled={isDisabled}
                       onClick={() => executeCombatRound(move)}
                       className={`flex flex-col items-start text-left p-3.5 rounded-xl border transition-all duration-200 select-none ${
-                        noPPLeft
+                        isDisabled
                           ? 'opacity-40 bg-zinc-950 border-zinc-900 cursor-not-allowed'
                           : 'bg-zinc-950 hover:bg-zinc-900/60 border-zinc-850 hover:border-red-500/40 cursor-pointer active:scale-98 group'
                       }`}
@@ -1188,17 +1211,20 @@ export function BattleScreen({
                   {playerTeam.map((poke, idx) => {
                     const isCurrent = idx === activePlayerIdx;
                     const isDead = poke.hp <= 0;
+                    const switchDisabled = isCurrent || isDead || isAnimating;
                     return (
                       <button
                         key={poke.name}
                         id={`btn-switching-poke-${poke.name.split(' ')[0]}`}
-                        disabled={isCurrent || isDead}
+                        disabled={switchDisabled}
                         onClick={() => executePlayerSwitch(idx)}
                         className={`flex flex-col text-left p-2.5 rounded-lg border text-xs relative ${
                           isCurrent
                             ? 'bg-zinc-900 border-zinc-800 opacity-60 cursor-default'
                             : isDead
                             ? 'bg-zinc-950 border-zinc-950 opacity-30 cursor-not-allowed'
+                            : isAnimating
+                            ? 'opacity-45 cursor-not-allowed bg-zinc-900 border-zinc-850'
                             : 'bg-zinc-900/40 border-zinc-850 hover:border-red-500/50 cursor-pointer active:scale-98 transition-all'
                         }`}
                       >
@@ -1224,9 +1250,12 @@ export function BattleScreen({
               <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
                 <button
                   id="btn-switch-tab-toggle"
+                  disabled={isAnimating}
                   onClick={() => setIsSwitchingOpen(prev => !prev)}
                   className={`flex items-center gap-1.5 text-xs font-bold py-2 px-4 rounded-lg border transition-all ${
-                    isSwitchingOpen
+                    isAnimating
+                      ? 'opacity-40 cursor-not-allowed bg-zinc-950 text-zinc-500 border-zinc-900'
+                      : isSwitchingOpen
                       ? 'bg-red-950 text-red-400 border-red-900 font-black'
                       : 'bg-zinc-950 text-zinc-300 border-zinc-850 hover:bg-zinc-900'
                   }`}
@@ -1236,10 +1265,10 @@ export function BattleScreen({
 
                 <button
                   id="btn-player-potion"
-                  disabled={playerPotionsLeft <= 0 || activePlayer.hp <= 0 || isSwitchingOpen}
+                  disabled={playerPotionsLeft <= 0 || activePlayer.hp <= 0 || isSwitchingOpen || isAnimating}
                   onClick={executePlayerPotion}
                   className={`flex items-center gap-1.5 text-xs font-bold py-2 px-4 rounded-lg border transition-all ${
-                    playerPotionsLeft <= 0
+                    playerPotionsLeft <= 0 || isAnimating
                       ? 'opacity-40 cursor-not-allowed text-zinc-500 border-zinc-900 bg-zinc-950'
                       : 'bg-zinc-950 text-zinc-305 border-zinc-850 hover:bg-zinc-900 hover:text-green-400'
                   }`}
@@ -1249,8 +1278,11 @@ export function BattleScreen({
 
                 <button
                   id="btn-battle-concede"
+                  disabled={isAnimating}
                   onClick={onBackToLobby}
-                  className="ml-auto flex items-center gap-1 text-xs font-bold py-2 px-4 rounded-lg border border-red-950/40 text-red-400/80 hover:bg-red-950/20 active:scale-95 transition-all"
+                  className={`ml-auto flex items-center gap-1 text-xs font-bold py-2 px-4 rounded-lg border border-red-950/40 text-red-400/80 active:scale-95 transition-all ${
+                    isAnimating ? 'opacity-40 cursor-not-allowed' : 'hover:bg-red-950/20'
+                  }`}
                 >
                   Concede Match
                 </button>
@@ -1299,15 +1331,17 @@ export function BattleScreen({
               <input
                 id="terminal-command-input"
                 type="text"
+                disabled={isAnimating}
                 placeholder="Type command code (1-5)..."
                 value={terminalInput}
                 onChange={(e) => setTerminalInput(e.target.value)}
-                className="flex-1 bg-zinc-950 border border-zinc-850 focus:outline-none focus:ring-1 focus:ring-red-500 rounded-xl px-4 py-2 font-mono text-xs text-zinc-100 placeholder:text-zinc-600"
+                className="flex-1 bg-zinc-950 border border-zinc-850 focus:outline-none focus:ring-1 focus:ring-red-500 rounded-xl px-4 py-2 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 disabled:opacity-40 disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
                 id="btn-terminal-submit"
-                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 font-mono text-xs px-4 py-2 rounded-xl transition-all font-bold"
+                disabled={isAnimating}
+                className="bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 font-mono text-xs px-4 py-2 rounded-xl transition-all font-bold disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 SUBMIT
               </button>
