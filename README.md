@@ -1,37 +1,54 @@
 # 🏟️ Poke Championship League
 
-Welcome to the **Poke Championship League**, a high-fidelity, retro-inspired Pokémon battle simulator. Draft your perfect team of six Pokémon and face five consecutive matches against the regional Elite Four and Champion Cynthia. Master the elements, strategize status effects, and claim your place in the Hall of Fame!
+Welcome to the **Poke Championship League**, a high-fidelity, retro-inspired Pokémon battle simulator. Draft your perfect team of six Pokémon and conquer multiple consecutive regional League Tournaments. Master the elements, strategize status effects, and claim your place in the Hall of Fame!
 
 ---
 
 ## 🌟 Key Features
 
-### ⚔️ Consecutive Matches Challenge
-Fight consecutive battles without changing your drafted squad. Your Pokémon are fully healed and their PP is restored between battles, but a single defeat breaks your streak and resets your progress:
-1. **Glacia (Elite I)** — *Ice Specialty* (Abomasnow, Glaceon, Weavile, Froslass, Cloyster, Lapras [Ace])
-2. **Bruno (Elite II)** — *Fighting & Ground Specialty* (Hariyama, Steelix, Conkeldurr, Garchomp, Lucario, Machamp [Ace])
-3. **Agatha (Elite III)** — *Ghost & Psychic Specialty* (Mismagius, Alakazam, Chandelure, Gardevoir, Dusknoir, Gengar [Ace])
-4. **Lance (Elite IV)** — *Dragon Specialty* (Aerodactyl, Gyarados, Garchomp, Charizard, Salamence, Dragonite [Ace])
-5. **Cynthia (League Champion)** — *Balanced All-Around Master* (Spiritomb, Roserade, Togekiss, Lucario, Milotic, Garchomp [Ace])
+### ⚔️ Multiple Regional League Gauntlets
+Challenge three distinct tournament gauntlets of consecutive matches without changing your drafted squad. Your Pokémon are fully healed and their PP is restored between battles, but a single defeat breaks your streak and resets your progress:
+
+1. **Classic Crossover League (Kanto / Classic)** — *5-Stage Hybrid Challenge*
+   * **Glacia (Elite I)** — *Ice Specialty* (Abomasnow, Glaceon, Weavile, Froslass, Cloyster, Lapras [Ace])
+   * **Bruno (Elite II)** — *Fighting & Ground Specialty* (Hariyama, Steelix, Conkeldurr, Garchomp, Lucario, Machamp [Ace])
+   * **Agatha (Elite III)** — *Ghost & Psychic Specialty* (Mismagius, Alakazam, Chandelure, Gardevoir, Dusknoir, Gengar [Ace])
+   * **Lance (Elite IV)** — *Dragon Specialty* (Aerodactyl, Gyarados, Garchomp, Charizard, Salamence, Dragonite [Ace])
+   * **Blue (League Champion)** — *Balanced Master* (Pidgeot, Alakazam, Rhydon, Gyarados, Exeggutor, Arcanine [Ace])
+
+2. **Sinnoh Master League (Sinnoh)** — *5-Stage Region-Accurate Gauntlet*
+   * **Aaron (Elite I)** — *Bug Specialty* (Yanmega, Heracross, Vespiquen, Pinsir, Drapion [Ace])
+   * **Bertha (Elite II)** — *Ground Specialty* (Whiscash, Gliscor, Hippowdon, Golem, Rhyperior [Ace])
+   * **Flint (Elite III)** — *Fire Specialty* (Houndoom, Flareon, Rapidash, Magmortar, Arcanine, Infernape [Ace])
+   * **Lucian (Elite IV)** — *Psychic Specialty* (Mr. Mime, Espeon, Bronzong, Alakazam, Medicham, Gallade [Ace])
+   * **Cynthia (League Champion)** — *All-Around Archaeologist Master* (Spiritomb, Roserade, Togekiss, Lucario, Milotic, Garchomp [Ace])
+
+3. **Hoenn Champion League (Hoenn)** — *6-Stage Gen 3 Master Gauntlet*
+   * **Sidney (Elite I)** — *Dark Specialty* (Mightyena, Shiftry, Cacturne, Crawdaunt, Sharpedo, Absol [Ace])
+   * **Phoebe (Elite II)** — *Ghost Specialty* (Dusclops, Banette, Sableye, Drifblim, Claydol, Dusknoir [Ace])
+   * **Glacia (Elite III)** — *Ice Specialty* (Glalie, Froslass, Walrein, Abomasnow, Aurorus, Walrein [Ace])
+   * **Drake (Elite IV)** — *Dragon Specialty* (Altaria, Flygon, Kingdra, Noivern, Haxorus, Salamence [Ace])
+   * **Steven Stone (Champion)** — *Steel & Rock Specialty* (Skarmory, Claydol, Aggron, Cradily, Armaldo, Metagross [Ace])
+   * **Wallace (Grand Champion)** — *Water Specialty* (Wailord, Tentacruel, Ludicolo, Whiscash, Gyarados, Milotic [Ace])
 
 ### 🎛️ Squad Drafting
 Choose your strategic approach before entering the arena:
 * **Prebuilt Archetypes**: Instantly deploy standard templates:
-  * **Trinity Classic Team**: A balanced Kanto starter trio with defensive coverage.
-  * **Dragonic Swarm Force**: Heavy offense, high-speed dragon scaling, and stat-boosting setups.
-  * **Electro-Mystic Vanguard**: High tactical diversity, paralysis controllers, and type coverage.
-* **Custom Draft**: Hand-pick exactly six Pokémon from the registry. Inspect detailed attributes, movesets, and base stats (HP, Attack, Defense, Special Attack, Special Defense, Speed) via the visual hover index.
+  * **Trinity Classic Team**: A balanced Kanto starter trio with defensive coverage (*Charizard, Blastoise, Venusaur, Gardevoir, Lucario, Snorlax*).
+  * **Dragonic Swarm Force**: Heavy offense, high-speed dragon scaling, and stat-boosting setups (*Dragonite, Garchomp, Volcarona, Metagross, Gengar, Lapras*).
+  * **Electro-Mystic Vanguard**: High tactical diversity, paralysis controllers, and type coverage (*Pikachu, Sylveon, Tyranitar, Alakazam, Scizor, Gyarados*).
+* **Custom Draft**: Hand-pick exactly six Pokémon from the registry. Inspect detailed attributes, movesets, and base stats (HP, Attack, Defense, Special Attack, Special Defense, Speed) via the visual hover index. Supported pool expanded to **53 options** including Aegislash, Greninja, Decidueye, Tinkaton, Dragapult, Zeraora, Volcanion, Sinnoh/Hoenn champions & elite favorites, Hoenn starters (*Swampert, Sceptile, Blaziken*) and Eeveelutions (*Umbreon, Espeon, Sylveon*).
 
 ### 🧮 Battle & Combat Engine
 Built on standard core Pokémon battle mechanics:
-* **HP Scaling**: Balanced high-level HP pools that allow setups, status infliction, and tactical switches.
+* **HP & Stat Scaling**: All active Pokémon stats are mathematically scaled to match their neutral Level 100 values from the actual games (HP: `Base * 2 + 110`, Attack/Defense/SpAtk/SpDef/Speed: `Base * 2 + 5`), ensuring authentic speed tiers and balanced combat pacing.
 * **Move Categories**: Physical moves scale with Physical Attack/Defense; Special moves scale with Special Attack/Defense.
-* **Stat Stages**: Boost or lower stats (-6 to +6 stages) using setup moves (e.g., *Swords Dance*, *Calm Mind*, *Iron Defense*, *Nasty Plot*) or move side-effects (*Close Combat* recoil).
-* **Type Matchups**: Complete type effectiveness multiplier grid (immunities, resistance, super-effective, and STAB 1.5x damage bonus).
+* **Stat Stages**: Boost or lower stats (-6 to +6 stages) using setup moves (e.g., *Swords Dance*, *Iron Defense*, *Nasty Plot*) or move side-effects (*Close Combat* recoil). Multi-stat setup moves like *Calm Mind* (SpAtk + SpDef), *Dragon Dance* (Attack + Speed), and *Quiver Dance* (SpAtk + SpDef + Speed) dynamically boost multiple stats simultaneously.
+* **Type Matchups**: Complete type effectiveness multiplier grid (immunities, resistance, super-effective, and STAB 1.5x damage bonus) across all 18 standard types.
 * **Status Conditions**: 
-  * **Burn (🔥)**: Inflicts end-of-turn damage and halves physical attack power.
+  * **Burn (🔥)**: Inflicts end-of-turn damage (1/16th max HP) and halves physical attack power.
   * **Paralysis (⚡)**: Halves speed and introduces a 25% chance to fully paralyze (fail actions).
-  * **Poison (☣️)**: Inflicts significant end-of-turn damage.
+  * **Poison (☣️)**: Inflicts significant end-of-turn damage (1/8th max HP).
 * **Items Usage**: Player has 2 Potions per fight. Opponents have a single expert Max Potion used when their HP drops below 25%.
 
 ### 🧠 Expert AI Decision Tree
@@ -118,15 +135,25 @@ Pokémon-League/
 
 ## 📊 Type Chart Reference Guide
 
+Full 18-type effectiveness matchups are implemented in the combat engine. Attacking moves matching the user's type gain a **Same-Type Attack Bonus (STAB) of 1.5x damage**. Immune matchups result in **0x damage**.
+
 | Attacking Type | Super Effective (2.0x) | Not Very Effective (0.5x) | No Effect (0x) |
 |---|---|---|---|
+| **Normal** | — | Rock, Steel | Ghost |
 | **Fire** | Grass, Ice, Bug, Steel | Fire, Water, Rock, Dragon | — |
 | **Water** | Fire, Ground, Rock | Water, Grass, Dragon | — |
 | **Grass** | Water, Ground, Rock | Fire, Grass, Poison, Flying, Bug, Dragon, Steel | — |
 | **Electric** | Water, Flying | Grass, Electric, Dragon | Ground |
-| **Ground** | Fire, Electric, Poison, Rock, Steel | Grass, Bug | Flying |
+| **Ice** | Grass, Ground, Flying, Dragon | Fire, Water, Ice, Steel | — |
 | **Fighting** | Normal, Ice, Rock, Steel, Dark | Poison, Flying, Psychic, Bug, Fairy | Ghost |
+| **Poison** | Grass, Fairy | Poison, Ground, Rock, Ghost | Steel |
+| **Ground** | Fire, Electric, Poison, Rock, Steel | Grass, Bug | Flying |
+| **Flying** | Grass, Fighting, Bug | Electric, Rock, Steel | — |
+| **Psychic** | Fighting, Poison | Psychic, Steel | Dark |
+| **Bug** | Grass, Psychic, Dark | Fire, Fighting, Poison, Flying, Ghost, Steel, Fairy | — |
+| **Rock** | Fire, Ice, Flying, Bug | Fighting, Ground, Steel | — |
 | **Ghost** | Psychic, Ghost | Dark | Normal |
 | **Dragon** | Dragon | Steel | Fairy |
-
-*Note: Immune matchups yield zero damage. Same-Type Attack Bonus (STAB) grants an additional 1.5x damage boost to any attack matching the user's element.*
+| **Steel** | Ice, Rock, Fairy | Water, Electric, Steel | — |
+| **Dark** | Psychic, Ghost | Fighting, Dark, Fairy | — |
+| **Fairy** | Fighting, Dragon, Dark | Poison, Steel | — |
