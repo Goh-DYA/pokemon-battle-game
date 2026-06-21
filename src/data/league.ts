@@ -1,4 +1,4 @@
-import { Trainer, PokemonTemplate, ActivePokemon } from '../types';
+import { Trainer, PokemonTemplate, ActivePokemon, ChallengeSet } from '../types';
 import { getMoveInstance } from './moves';
 
 // We can define custom templates for Elite Four Pokémon directly
@@ -457,6 +457,572 @@ export const BOSS_TRAINERS: Trainer[] = [
         colorTheme: 'indigo',
       },
     ],
+  },
+];
+
+export const BOSS_TRAINERS_GEN3: Trainer[] = [
+  {
+    name: 'Sidney (Elite I)',
+    specialtyType: 'Dark',
+    teaser: 'Sidney, the dark shadow tactician. With sharp claws and unpredictable type coverages, he will catch you off guard!',
+    avatarUrl: '🕶️',
+    dialogue: {
+      intro: 'Well, howdy! I am Sidney of the Elite Four. You look like a tough trainer, but let us see how you handle my dark type brigade. We do not fight clean, and we sure do not plan on losing!',
+      defeat: 'Well, how about that! You completely outplayed me. Go on, the next member is waiting!',
+      win: 'Hah! Dark type moves are tricky, aren\'t they? Do not feel too bad, we just had the better strategy.'
+    },
+    team: [
+      {
+        name: 'Mightyena',
+        types: ['Dark'],
+        hp: 70,
+        attack: 90,
+        defense: 70,
+        spAttack: 60,
+        spDefense: 60,
+        speed: 70,
+        moves: ['Body Slam', 'Dark Pulse', 'Will-O-Wisp', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'slate'
+      },
+      {
+        name: 'Shiftry',
+        types: ['Grass', 'Dark'],
+        hp: 90,
+        attack: 100,
+        defense: 60,
+        spAttack: 90,
+        spDefense: 60,
+        speed: 80,
+        moves: ['Leaf Storm', 'Dark Pulse', 'Hurricane', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Cacturne',
+        types: ['Grass', 'Dark'],
+        hp: 70,
+        attack: 115,
+        defense: 60,
+        spAttack: 115,
+        spDefense: 60,
+        speed: 55,
+        moves: ['Leaf Storm', 'Dark Pulse', 'Earthquake', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Crawdaunt',
+        types: ['Water', 'Dark'],
+        hp: 63,
+        attack: 120,
+        defense: 85,
+        spAttack: 90,
+        spDefense: 55,
+        speed: 55,
+        moves: ['Surf', 'Dark Pulse', 'Close Combat', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'blue'
+      },
+      {
+        name: 'Sharpedo',
+        types: ['Water', 'Dark'],
+        hp: 70,
+        attack: 120,
+        defense: 40,
+        spAttack: 95,
+        spDefense: 40,
+        speed: 95,
+        moves: ['Hydro Pump', 'Dark Pulse', 'Ice Beam', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'cyan'
+      },
+      {
+        name: 'Absol (Ace)',
+        types: ['Dark'],
+        hp: 65,
+        attack: 130,
+        defense: 60,
+        spAttack: 75,
+        spDefense: 60,
+        speed: 75,
+        moves: ['Body Slam', 'Dark Pulse', 'Stone Edge', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'indigo'
+      }
+    ]
+  },
+  {
+    name: 'Phoebe (Elite II)',
+    specialtyType: 'Ghost',
+    teaser: 'Phoebe, the spirit speaker. She communicates with the beyond to command bulky ghosts that will curse and outlast your squad.',
+    avatarUrl: '🌺',
+    dialogue: {
+      intro: 'Hello, challenger! I am Phoebe. I did my training at Mt. Pyre, where my bond with ghost Pokémon grew deep. Normal attacks cannot touch us! Are you ready to see our spiritual strength?',
+      defeat: 'Oh! Your bond with your Pokémon must be truly beautiful to pierce through my ghost brigade.',
+      win: 'Aha! The spirits have spoken, and they predicted your defeat. Better luck next time!'
+    },
+    team: [
+      {
+        name: 'Dusclops',
+        types: ['Ghost'],
+        hp: 40,
+        attack: 70,
+        defense: 130,
+        spAttack: 60,
+        spDefense: 130,
+        speed: 25,
+        moves: ['Shadow Ball', 'Ice Beam', 'Recover', 'Will-O-Wisp'],
+        spriteUrl: '',
+        colorTheme: 'slate'
+      },
+      {
+        name: 'Banette',
+        types: ['Ghost'],
+        hp: 64,
+        attack: 115,
+        defense: 65,
+        spAttack: 83,
+        spDefense: 63,
+        speed: 65,
+        moves: ['Shadow Ball', 'Body Slam', 'Thunderbolt', 'Will-O-Wisp'],
+        spriteUrl: '',
+        colorTheme: 'purple'
+      },
+      {
+        name: 'Sableye',
+        types: ['Dark', 'Ghost'],
+        hp: 50,
+        attack: 75,
+        defense: 75,
+        spAttack: 65,
+        spDefense: 65,
+        speed: 50,
+        moves: ['Dark Pulse', 'Shadow Ball', 'Recover', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'violet'
+      },
+      {
+        name: 'Drifblim',
+        types: ['Ghost', 'Flying'],
+        hp: 150,
+        attack: 80,
+        defense: 44,
+        spAttack: 90,
+        spDefense: 54,
+        speed: 80,
+        moves: ['Shadow Ball', 'Hurricane', 'Thunderbolt', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'sky'
+      },
+      {
+        name: 'Claydol',
+        types: ['Ground', 'Psychic'],
+        hp: 60,
+        attack: 70,
+        defense: 105,
+        spAttack: 70,
+        spDefense: 120,
+        speed: 75,
+        moves: ['Earth Power', 'Psychic', 'Flash Cannon', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'amber'
+      },
+      {
+        name: 'Dusknoir (Ace)',
+        types: ['Ghost'],
+        hp: 45,
+        attack: 100,
+        defense: 135,
+        spAttack: 65,
+        spDefense: 135,
+        speed: 45,
+        moves: ['Shadow Ball', 'Earthquake', 'Close Combat', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'stone'
+      }
+    ]
+  },
+  {
+    name: 'Glacia (Elite III)',
+    specialtyType: 'Ice',
+    teaser: 'Glacia, the Ice Queen. Hailing from distant, frozen lands, her glacial defense and absolute zero attacks will freeze you solid!',
+    avatarUrl: '❄️',
+    dialogue: {
+      intro: 'Welcome. I am Glacia of the Elite Four. I came to Hoenn seeking warmer waters, but my ice remains as hard and cold as ever. Can you melt my frosty guardians?',
+      defeat: 'Incredible... You have shattered my ice. You are truly a warm-hearted challenger!',
+      win: 'Brrr... You were simply frozen in place. You need more fire in your battle style!'
+    },
+    team: [
+      {
+        name: 'Glalie',
+        types: ['Ice'],
+        hp: 80,
+        attack: 80,
+        defense: 80,
+        spAttack: 80,
+        spDefense: 80,
+        speed: 80,
+        moves: ['Ice Beam', 'Body Slam', 'Earthquake', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'sky'
+      },
+      {
+        name: 'Froslass',
+        types: ['Ice', 'Ghost'],
+        hp: 70,
+        attack: 80,
+        defense: 70,
+        spAttack: 80,
+        spDefense: 70,
+        speed: 110,
+        moves: ['Ice Beam', 'Shadow Ball', 'Thunderbolt', 'Will-O-Wisp'],
+        spriteUrl: '',
+        colorTheme: 'indigo'
+      },
+      {
+        name: 'Walrein',
+        types: ['Water', 'Ice'],
+        hp: 110,
+        attack: 80,
+        defense: 90,
+        spAttack: 95,
+        spDefense: 90,
+        speed: 65,
+        moves: ['Surf', 'Ice Beam', 'Body Slam', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'blue'
+      },
+      {
+        name: 'Abomasnow',
+        types: ['Grass', 'Ice'],
+        hp: 90,
+        attack: 92,
+        defense: 75,
+        spAttack: 92,
+        spDefense: 85,
+        speed: 60,
+        moves: ['Leaf Storm', 'Ice Beam', 'Earthquake', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Aurorus',
+        types: ['Rock', 'Ice'],
+        hp: 123,
+        attack: 77,
+        defense: 72,
+        spAttack: 99,
+        spDefense: 92,
+        speed: 58,
+        moves: ['Stone Edge', 'Blizzard', 'Earth Power', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'rose'
+      },
+      {
+        name: 'Walrein (Ace)',
+        types: ['Water', 'Ice'],
+        hp: 110,
+        attack: 80,
+        defense: 90,
+        spAttack: 95,
+        spDefense: 90,
+        speed: 65,
+        moves: ['Hydro Pump', 'Blizzard', 'Body Slam', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'cyan'
+      }
+    ]
+  },
+  {
+    name: 'Drake (Elite IV)',
+    specialtyType: 'Dragon',
+    teaser: 'Drake, the dragon captain. A veteran seafarer commanding massive, scale-plated dragon beasts of unparalleled raw power.',
+    avatarUrl: '⚓',
+    dialogue: {
+      intro: 'Ahoy, challenger! I am Drake. A Pokémon battle is all about testing your grit. Dragon Pokémon are raw power in its truest form! Show me what you are made of!',
+      defeat: 'Hahahaha! Magnificent! Your battle spirit has bested my dragons. Go forward, Champion awaits!',
+      win: 'Hmph. You lacked the absolute focus to pierce my dragons\' thick scales. Go back and train!'
+    },
+    team: [
+      {
+        name: 'Altaria',
+        types: ['Dragon', 'Flying'],
+        hp: 75,
+        attack: 70,
+        defense: 90,
+        spAttack: 70,
+        spDefense: 105,
+        speed: 80,
+        moves: ['Dragon Pulse', 'Air Slash', 'Recover', 'Dragon Dance'],
+        spriteUrl: '',
+        colorTheme: 'sky'
+      },
+      {
+        name: 'Flygon',
+        types: ['Dragon', 'Ground'],
+        hp: 80,
+        attack: 100,
+        defense: 80,
+        spAttack: 80,
+        spDefense: 80,
+        speed: 100,
+        moves: ['Outrage', 'Earthquake', 'Stone Edge', 'Dragon Dance'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Kingdra',
+        types: ['Water', 'Dragon'],
+        hp: 75,
+        attack: 95,
+        defense: 95,
+        spAttack: 95,
+        spDefense: 95,
+        speed: 85,
+        moves: ['Surf', 'Dragon Pulse', 'Ice Beam', 'Dragon Dance'],
+        spriteUrl: '',
+        colorTheme: 'blue'
+      },
+      {
+        name: 'Noivern',
+        types: ['Flying', 'Dragon'],
+        hp: 85,
+        attack: 70,
+        defense: 80,
+        spAttack: 97,
+        spDefense: 80,
+        speed: 123,
+        moves: ['Hurricane', 'Dragon Pulse', 'Thunderbolt', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'purple'
+      },
+      {
+        name: 'Haxorus',
+        types: ['Dragon'],
+        hp: 76,
+        attack: 147,
+        defense: 90,
+        spAttack: 60,
+        spDefense: 70,
+        speed: 97,
+        moves: ['Outrage', 'Earthquake', 'Close Combat', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'amber'
+      },
+      {
+        name: 'Salamence (Ace)',
+        types: ['Dragon', 'Flying'],
+        hp: 95,
+        attack: 135,
+        defense: 80,
+        spAttack: 110,
+        spDefense: 80,
+        speed: 100,
+        moves: ['Outrage', 'Hurricane', 'Flamethrower', 'Dragon Dance'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      }
+    ]
+  },
+  {
+    name: 'Steven Stone (Champion)',
+    specialtyType: 'Steel & Rock',
+    teaser: 'Steven, the silver champion. He searches the world for rare stones and commands a metal-hard, psychic steel fortress.',
+    avatarUrl: '💎',
+    dialogue: {
+      intro: 'Welcome. I am Steven. I travel across regions investigating rare meteorites and stone formations. My steel and rock partners represent the absolute hardest defense and devastating power. Let us begin!',
+      defeat: 'Simply spectacular! You and your Pokémon have shone brighter than the finest diamond.',
+      win: 'Hah! My steel wall stood strong. Perhaps you need to refine your battle strategies like a rough gem.'
+    },
+    team: [
+      {
+        name: 'Skarmory',
+        types: ['Steel', 'Flying'],
+        hp: 65,
+        attack: 80,
+        defense: 140,
+        spAttack: 40,
+        spDefense: 70,
+        speed: 70,
+        moves: ['Body Slam', 'Air Slash', 'Flash Cannon', 'Iron Defense'],
+        spriteUrl: '',
+        colorTheme: 'slate'
+      },
+      {
+        name: 'Claydol',
+        types: ['Ground', 'Psychic'],
+        hp: 60,
+        attack: 70,
+        defense: 105,
+        spAttack: 70,
+        spDefense: 120,
+        speed: 75,
+        moves: ['Earthquake', 'Psychic', 'Stone Edge', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'amber'
+      },
+      {
+        name: 'Aggron',
+        types: ['Steel', 'Rock'],
+        hp: 70,
+        attack: 110,
+        defense: 180,
+        spAttack: 60,
+        spDefense: 60,
+        speed: 50,
+        moves: ['Stone Edge', 'Flash Cannon', 'Earthquake', 'Iron Defense'],
+        spriteUrl: '',
+        colorTheme: 'stone'
+      },
+      {
+        name: 'Cradily',
+        types: ['Rock', 'Grass'],
+        hp: 86,
+        attack: 81,
+        defense: 97,
+        spAttack: 81,
+        spDefense: 107,
+        speed: 43,
+        moves: ['Giga Drain', 'Stone Edge', 'Recover', 'Iron Defense'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Armaldo',
+        types: ['Rock', 'Bug'],
+        hp: 75,
+        attack: 125,
+        defense: 100,
+        spAttack: 70,
+        spDefense: 80,
+        speed: 45,
+        moves: ['Bug Buzz', 'Stone Edge', 'Earthquake', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'rose'
+      },
+      {
+        name: 'Metagross (Ace)',
+        types: ['Steel', 'Psychic'],
+        hp: 80,
+        attack: 135,
+        defense: 130,
+        spAttack: 95,
+        spDefense: 90,
+        speed: 70,
+        moves: ['Flash Cannon', 'Psychic', 'Earthquake', 'Swords Dance'],
+        spriteUrl: '',
+        colorTheme: 'indigo'
+      }
+    ]
+  },
+  {
+    name: 'Wallace (Grand Champion)',
+    specialtyType: 'Water',
+    teaser: 'Wallace, the master of elegance. He leads a breathtaking, water-based group designed to wash away all opposition with beautiful styling.',
+    avatarUrl: '⛲',
+    dialogue: {
+      intro: 'Welcome, dear challenger. I am Wallace, the Grand Champion of Hoenn. Let us create a spectacular, elegant performance! Let the water wash over the battlefield!',
+      defeat: 'Oh! An absolutely dazzling display! You and your team have painted a masterpiece of victory.',
+      win: 'Elegance is the key. Your moves were a bit too rough to break my gentle currents.'
+    },
+    team: [
+      {
+        name: 'Wailord',
+        types: ['Water'],
+        hp: 170,
+        attack: 90,
+        defense: 45,
+        spAttack: 90,
+        spDefense: 45,
+        speed: 60,
+        moves: ['Hydro Pump', 'Blizzard', 'Body Slam', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'blue'
+      },
+      {
+        name: 'Tentacruel',
+        types: ['Water', 'Poison'],
+        hp: 80,
+        attack: 70,
+        defense: 65,
+        spAttack: 80,
+        spDefense: 120,
+        speed: 100,
+        moves: ['Surf', 'Sludge Bomb', 'Dazzling Gleam', 'Toxic'],
+        spriteUrl: '',
+        colorTheme: 'purple'
+      },
+      {
+        name: 'Ludicolo',
+        types: ['Water', 'Grass'],
+        hp: 80,
+        attack: 70,
+        defense: 70,
+        spAttack: 90,
+        spDefense: 100,
+        speed: 70,
+        moves: ['Giga Drain', 'Surf', 'Ice Beam', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'emerald'
+      },
+      {
+        name: 'Whiscash',
+        types: ['Water', 'Ground'],
+        hp: 110,
+        attack: 78,
+        defense: 73,
+        spAttack: 76,
+        spDefense: 71,
+        speed: 60,
+        moves: ['Surf', 'Earth Power', 'Stone Edge', 'Calm Mind'],
+        spriteUrl: '',
+        colorTheme: 'amber'
+      },
+      {
+        name: 'Gyarados',
+        types: ['Water', 'Flying'],
+        hp: 95,
+        attack: 125,
+        defense: 79,
+        spAttack: 60,
+        spDefense: 100,
+        speed: 81,
+        moves: ['Hurricane', 'Body Slam', 'Stone Edge', 'Dragon Dance'],
+        spriteUrl: '',
+        colorTheme: 'cyan'
+      },
+      {
+        name: 'Milotic (Ace)',
+        types: ['Water'],
+        hp: 95,
+        attack: 60,
+        defense: 79,
+        spAttack: 100,
+        spDefense: 125,
+        speed: 81,
+        moves: ['Hydro Pump', 'Ice Beam', 'Toxic', 'Recover'],
+        spriteUrl: '',
+        colorTheme: 'cyan'
+      }
+    ]
+  }
+];
+
+export const CHALLENGE_SETS: ChallengeSet[] = [
+  {
+    id: 'sinnoh',
+    name: 'Sinnoh League & Classics',
+    region: 'Sinnoh',
+    description: 'Battle Glacia, Bruno, Agatha, Lance, and Cynthia in a 5-stage classic crossover gauntlet.',
+    trainers: BOSS_TRAINERS,
+  },
+  {
+    id: 'hoenn',
+    name: 'Hoenn Champion League',
+    region: 'Hoenn',
+    description: 'Overcome Sidney, Phoebe, Glacia, Drake, Steven Stone, and Grand Champion Wallace in a 6-stage Gen 3 master gauntlet.',
+    trainers: BOSS_TRAINERS_GEN3,
   },
 ];
 

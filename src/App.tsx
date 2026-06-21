@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { GamePhase, ActivePokemon, Trainer } from './types';
-import { BOSS_TRAINERS, instantiateBossTeam } from './data/league';
+import { BOSS_TRAINERS, instantiateBossTeam, CHALLENGE_SETS } from './data/league';
 import { createActivePokemon, POKEMON_DATABASE, getPokemonId } from './data/pokemon';
 import { TeamSelector } from './components/TeamSelector';
 import { BattleScreen } from './components/BattleScreen';
 import { Shield, Trophy, Swords, Sparkles, BookOpen, User, Flame, RefreshCw, Star, Info, Zap, AlertTriangle } from 'lucide-react';
 import { AudioProvider } from './components/AudioContext';
 import { HallOfFameStats } from './components/HallOfFameStats';
+import { audio } from './utils/audio';
 
 export default function App() {
   const [phase, setPhase] = useState<GamePhase>('WELCOME');
+  const [activeSetId, setActiveSetId] = useState<string>('sinnoh');
   const [currentStageIdx, setCurrentStageIdx] = useState<number>(0);
   const [playerRoster, setPlayerRoster] = useState<ActivePokemon[]>([]);
   const [showTypeChartHelp, setShowTypeChartHelp] = useState<boolean>(false);
   const [showRegistryDrawer, setShowRegistryDrawer] = useState<boolean>(false);
+
+  const currentSet = CHALLENGE_SETS.find(s => s.id === activeSetId) || CHALLENGE_SETS[0];
+
 
   // Save victory to local storage
   const recordLeagueWin = (roster: ActivePokemon[]) => {
@@ -51,7 +56,7 @@ export default function App() {
         date: new Date().toLocaleDateString(),
         pokemon: roster.map(p => ({ name: p.name, types: p.types })),
         outcome: 'WIN' as const,
-        stagesCleared: BOSS_TRAINERS.length,
+        stagesCleared: currentSet.trainers.length,
       };
       localStorage.setItem('poke_league_history', JSON.stringify([newEntry, ...history]));
     } catch (e) {
@@ -135,7 +140,7 @@ export default function App() {
     setPlayerRoster(fullyHealedTeam);
 
     const nextIdx = currentStageIdx + 1;
-    if (nextIdx >= BOSS_TRAINERS.length) {
+    if (nextIdx >= currentSet.trainers.length) {
       // Completed Champion Cynthia! Go to Hall of Fame!
       recordLeagueWin(fullyHealedTeam);
       setPhase('HALL_OF_FAME');
@@ -156,7 +161,7 @@ export default function App() {
     setPhase('WELCOME');
   };
 
-  const currentBoss = BOSS_TRAINERS[currentStageIdx];
+  const currentBoss = currentSet.trainers[currentStageIdx];
 
   return (
     <AudioProvider phase={phase}>
@@ -316,39 +321,75 @@ export default function App() {
               </p>
             </div>
 
-            {/* Teaser columns showing what lies ahead */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 max-w-3xl mx-auto text-xs">
-              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-850">
-                <span className="text-2xl">❄️</span>
-                <div className="font-extrabold text-zinc-300 mt-2">Glacia</div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">Ice specialty</div>
-              </div>
-              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-850">
-                <span className="text-2xl">👊</span>
-                <div className="font-extrabold text-zinc-300 mt-2">Bruno</div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">Fighting specialty</div>
-              </div>
-              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-850">
-                <span className="text-2xl">🔮</span>
-                <div className="font-extrabold text-zinc-300 mt-2">Agatha</div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">Ghost specialty</div>
-              </div>
-              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-850">
-                <span className="text-2xl">🐉</span>
-                <div className="font-extrabold text-zinc-300 mt-2">Lance</div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">Dragon specialty</div>
-              </div>
-              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-850 col-span-2 md:col-span-1">
-                <span className="text-2xl">👑</span>
-                <div className="font-extrabold text-zinc-300 mt-2">Cynthia</div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">Champion Master</div>
+            {/* League Challenge Selection Cards */}
+            <div className="max-w-4xl mx-auto my-6">
+              <h3 className="text-xs font-mono text-zinc-500 font-extrabold uppercase tracking-widest mb-4 text-center">
+                Select Your League Challenge
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                {CHALLENGE_SETS.map((set) => {
+                  const isSelected = activeSetId === set.id;
+                  return (
+                    <div
+                      key={set.id}
+                      id={`challenge-set-${set.id}`}
+                      onClick={() => { audio.playClick(); setActiveSetId(set.id); }}
+                      className={`cursor-pointer p-6 rounded-3xl border transition-all duration-300 relative group flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-zinc-900 border-red-500/80 shadow-xl shadow-red-950/20'
+                          : 'bg-zinc-950/40 border-zinc-850 hover:border-zinc-700 hover:bg-zinc-900/40'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[9px] font-mono font-bold tracking-widest px-2.5 py-0.5 rounded-full border uppercase ${
+                            set.id === 'hoenn'
+                              ? 'bg-blue-950/50 border-blue-900 text-blue-400'
+                              : 'bg-red-950/50 border-red-900 text-red-400'
+                          }`}>
+                            {set.region} Region
+                          </span>
+                          <span className="text-zinc-500 text-xs font-mono font-bold">
+                            {set.trainers.length} Stages
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-extrabold tracking-tight mt-3 text-zinc-100 font-sans group-hover:text-white transition-colors">
+                          {set.name}
+                        </h4>
+                        <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                          {set.description}
+                        </p>
+                      </div>
+
+                      {/* Preview of Boss Avatars */}
+                      <div className="mt-6 pt-4 border-t border-zinc-900/60 flex items-center justify-between">
+                        <div className="flex -space-x-1.5 overflow-hidden">
+                          {set.trainers.map((t, tIdx) => (
+                            <span
+                              key={tIdx}
+                              className="w-8 h-8 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center text-base shadow-md select-none"
+                              title={t.name}
+                            >
+                              {t.avatarUrl}
+                            </span>
+                          ))}
+                        </div>
+                        <span className={`text-xs font-mono font-bold uppercase transition-colors ${
+                          isSelected ? 'text-red-400 animate-pulse' : 'text-zinc-500 group-hover:text-zinc-300'
+                        }`}>
+                          {isSelected ? '✓ Selected' : 'Select League'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="pt-4 flex flex-col md:flex-row gap-3 justify-center max-w-md mx-auto">
               <button
                 id="btn-welcome-enter-lobby"
-                onClick={() => setPhase('TEAM_SELECT')}
+                onClick={() => { audio.playClick(); setPhase('TEAM_SELECT'); }}
                 className="flex-1 bg-gradient-to-r from-red-650 to-red-550 hover:from-red-600 hover:to-red-500 text-white font-black py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.03] shadow-lg shadow-red-950/40 text-sm tracking-wider font-mono cursor-pointer"
               >
                 <Swords className="w-5 h-5" /> ASSEMBLE ADVENTURE SQUAD
@@ -389,7 +430,7 @@ export default function App() {
 
             {/* League Progression Board */}
             <div className="space-y-4">
-              {BOSS_TRAINERS.map((trainer, idx) => {
+              {currentSet.trainers.map((trainer, idx) => {
                 const isCompleted = idx < currentStageIdx;
                 const isActive = idx === currentStageIdx;
                 const isLocked = idx > currentStageIdx;
@@ -573,7 +614,7 @@ export default function App() {
                 LEAGUE CHAMPION
               </h1>
               <p className="text-xs md:text-sm text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-                Your tactical genius and sync partner bonds have conquered five consecutive high-tier trainer matches, beating the regional Elite Four and Champion Cynthia herself!
+                Your tactical genius and sync partner bonds have conquered {currentSet.trainers.length} consecutive high-tier trainer matches, beating the regional Elite Four and {activeSetId === 'hoenn' ? 'Champions Steven & Wallace' : 'Champion Cynthia herself'}!
               </p>
             </div>
 

@@ -100,3 +100,12 @@ export interface Trainer {
 }
 
 export type GamePhase = 'WELCOME' | 'TEAM_SELECT' | 'LEAGUE_LOBBY' | 'TEASER' | 'BATTLE' | 'DEFEAT' | 'VICTORY_LAP' | 'HALL_OF_FAME';
+
+export interface ChallengeSet {
+  id: string;
+  name: string;
+  region: string;
+  description: string;
+  trainers: Trainer[];
+}
+
