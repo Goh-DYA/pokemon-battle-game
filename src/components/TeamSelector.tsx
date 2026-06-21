@@ -327,7 +327,7 @@ export function TeamSelector({ onSelectTeam }: TeamSelectorProps) {
             </div>
 
             {/* Hover details / Pokemon Encyclopedia info card */}
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex-1 h-fit">
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex-1 h-fit min-h-[480px]">
               {hoveredPokemon ? (
                 <div className="animate-fade-in text-xs">
                   {/* Large high-res official artwork representation */}
@@ -407,7 +407,7 @@ export function TeamSelector({ onSelectTeam }: TeamSelectorProps) {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full min-h-[140px] text-center text-zinc-600">
+                <div className="flex flex-col items-center justify-center h-full min-h-[480px] text-center text-zinc-600">
                   <Info className="w-5 h-5 mb-1.5 opacity-40" />
                   <p className="text-[10px]">Hover over any Pokémon to view detailed stats, typings, and diagnostic movesets.</p>
                 </div>
