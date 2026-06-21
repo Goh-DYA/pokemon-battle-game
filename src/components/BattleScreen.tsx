@@ -110,6 +110,19 @@ export function BattleScreen({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Refs to prevent stale closures in async turn execution
+  const playerTeamRef = useRef(playerTeam);
+  const opponentTeamRef = useRef(opponentTeam);
+  const activePlayerIdxRef = useRef(activePlayerIdx);
+  const activeOpponentIdxRef = useRef(activeOpponentIdx);
+  const enemyPotionUsedRef = useRef(enemyPotionUsed);
+
+  useEffect(() => { playerTeamRef.current = playerTeam; }, [playerTeam]);
+  useEffect(() => { opponentTeamRef.current = opponentTeam; }, [opponentTeam]);
+  useEffect(() => { activePlayerIdxRef.current = activePlayerIdx; }, [activePlayerIdx]);
+  useEffect(() => { activeOpponentIdxRef.current = activeOpponentIdx; }, [activeOpponentIdx]);
+  useEffect(() => { enemyPotionUsedRef.current = enemyPotionUsed; }, [enemyPotionUsed]);
+
   const activePlayer = playerTeam[activePlayerIdx];
   const activeOpponent = opponentTeam[activeOpponentIdx];
 
@@ -191,10 +204,10 @@ export function BattleScreen({
     setLogs(introLogs);
   }, [trainer, initialPlayerTeam]);
 
-  // Autoscroll logs
+  // Autoscroll logs (newest at top, scroll to top)
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = 0;
     }
   }, [logs]);
 
@@ -600,12 +613,12 @@ export function BattleScreen({
     setIsAnimating(true);
 
     // Create local copies to track states during async steps
-    let localPlayerTeam = playerTeam.map(p => ({
+    let localPlayerTeam = playerTeamRef.current.map(p => ({
       ...p,
       statStages: { ...p.statStages },
       moves: p.moves.map(m => ({ ...m })),
     }));
-    let localOpponentTeam = opponentTeam.map(p => ({
+    let localOpponentTeam = opponentTeamRef.current.map(p => ({
       ...p,
       statStages: { ...p.statStages },
       moves: p.moves.map(m => ({ ...m })),
@@ -614,8 +627,8 @@ export function BattleScreen({
     const ctx = {
       localPlayerTeam,
       localOpponentTeam,
-      localActivePlayerIdx: activePlayerIdx,
-      localActiveOpponentIdx: activeOpponentIdx,
+      localActivePlayerIdx: activePlayerIdxRef.current,
+      localActiveOpponentIdx: activeOpponentIdxRef.current,
       commit: (newLogs: { text: string; type: BattleLog['type'] }[] = []) => {
         setPlayerTeam([...ctx.localPlayerTeam]);
         setOpponentTeam([...ctx.localOpponentTeam]);
@@ -636,7 +649,12 @@ export function BattleScreen({
     ctx.commit();
 
     // AI Action choice
-    const aiAction = chooseAIChoice();
+    const aiAction = chooseAIChoice(
+      ctx.localOpponentTeam[ctx.localActiveOpponentIdx],
+      ctx.localPlayerTeam[ctx.localActivePlayerIdx],
+      ctx.localOpponentTeam,
+      ctx.localActiveOpponentIdx
+    );
 
     // 2. Turn priorities
     // If opponent is switching out
@@ -723,12 +741,12 @@ export function BattleScreen({
   const executeOpponentTurnOnlyAsync = async (newPlayerIdx: number, manageLock = true) => {
     if (manageLock) setIsAnimating(true);
 
-    let localPlayerTeam = playerTeam.map(p => ({
+    let localPlayerTeam = playerTeamRef.current.map(p => ({
       ...p,
       statStages: { ...p.statStages },
       moves: p.moves.map(m => ({ ...m })),
     }));
-    let localOpponentTeam = opponentTeam.map(p => ({
+    let localOpponentTeam = opponentTeamRef.current.map(p => ({
       ...p,
       statStages: { ...p.statStages },
       moves: p.moves.map(m => ({ ...m })),
@@ -738,7 +756,7 @@ export function BattleScreen({
       localPlayerTeam,
       localOpponentTeam,
       localActivePlayerIdx: newPlayerIdx,
-      localActiveOpponentIdx: activeOpponentIdx,
+      localActiveOpponentIdx: activeOpponentIdxRef.current,
       commit: (newLogs: { text: string; type: BattleLog['type'] }[] = []) => {
         setPlayerTeam([...ctx.localPlayerTeam]);
         setOpponentTeam([...ctx.localOpponentTeam]);
@@ -750,7 +768,12 @@ export function BattleScreen({
       }
     };
 
-    const aiAction = chooseAIChoice();
+    const aiAction = chooseAIChoice(
+      ctx.localOpponentTeam[ctx.localActiveOpponentIdx],
+      ctx.localPlayerTeam[ctx.localActivePlayerIdx],
+      ctx.localOpponentTeam,
+      ctx.localActiveOpponentIdx
+    );
     if (aiAction.type === 'move') {
       const opponentMove = aiAction.selectedMove!;
       await performAttack(false, opponentMove, ctx);
@@ -780,16 +803,21 @@ export function BattleScreen({
   };
 
   // AI Decision Tree calculations
-  const chooseAIChoice = (): { type: 'move' | 'switch' | 'item'; selectedMove?: Move; switchTargetIdx?: number } => {
+  const chooseAIChoice = (
+    currentOpponent: ActivePokemon,
+    currentPlayer: ActivePokemon,
+    currentOpponentTeam: ActivePokemon[],
+    currentActiveOpponentIdx: number
+  ): { type: 'move' | 'switch' | 'item'; selectedMove?: Move; switchTargetIdx?: number } => {
     // 1. Healing logic (Highest priority)
     // If active opponent has extremely low HP (<35%) and they have a healing capability
-    const healMove = activeOpponent.moves.find(m => m.effect?.hasRecover && m.pp > 0);
-    if (activeOpponent.hp < activeOpponent.maxHp * 0.35 && healMove && Math.random() < 0.6) {
+    const healMove = currentOpponent.moves.find(m => m.effect?.hasRecover && m.pp > 0);
+    if (currentOpponent.hp < currentOpponent.maxHp * 0.35 && healMove && Math.random() < 0.6) {
       return { type: 'move', selectedMove: healMove };
     }
 
     // If opponent has NO heal move, but they haven't used their single expert Max Potion, and HP < 25%
-    if (!enemyPotionUsed && activeOpponent.hp < activeOpponent.maxHp * 0.25 && Math.random() < 0.7) {
+    if (!enemyPotionUsedRef.current && currentOpponent.hp < currentOpponent.maxHp * 0.25 && Math.random() < 0.7) {
       return { type: 'item' };
     }
 
@@ -797,8 +825,8 @@ export function BattleScreen({
     // If opponent's active has major elemental type disadvantage against player's active
     // Check if player's types deal 2x or 4x damage to active opponent
     let suffersDisadvantage = false;
-    for (const playerType of activePlayer.types) {
-      const mult = getTypeEffectivenessMultiplier(playerType, activeOpponent.types);
+    for (const playerType of currentPlayer.types) {
+      const mult = getTypeEffectivenessMultiplier(playerType, currentOpponent.types);
       if (mult >= 2.0) {
         suffersDisadvantage = true;
         break;
@@ -807,11 +835,11 @@ export function BattleScreen({
 
     // If disadvantaged, check if we have a healthy team member who resists player's type, and 30% chance to swap
     if (suffersDisadvantage && Math.random() < 0.35) {
-      const candidates = opponentTeam.map((p, idx) => ({ p, idx })).filter(item => item.p.hp > 0 && item.idx !== activeOpponentIdx);
+      const candidates = currentOpponentTeam.map((p, idx) => ({ p, idx })).filter(item => item.p.hp > 0 && item.idx !== currentActiveOpponentIdx);
       
       const goodCandidate = candidates.find(candidate => {
         let maxMult = 1.0;
-        for (const playerType of activePlayer.types) {
+        for (const playerType of currentPlayer.types) {
           const mult = getTypeEffectivenessMultiplier(playerType, candidate.p.types);
           if (mult > maxMult) maxMult = mult;
         }
@@ -825,18 +853,18 @@ export function BattleScreen({
 
     // 3. Normal Move selection - choose optimal offensive move or status infector
     // Priority status moves
-    const statusMove = activeOpponent.moves.find(m => m.effect?.status && m.pp > 0);
-    if (statusMove && activePlayer.status === 'Healthy' && Math.random() < 0.3) {
+    const statusMove = currentOpponent.moves.find(m => m.effect?.status && m.pp > 0);
+    if (statusMove && currentPlayer.status === 'Healthy' && Math.random() < 0.3) {
       return { type: 'move', selectedMove: statusMove };
     }
 
     // Pick highest damage-dealing move
-    let bestMove = activeOpponent.moves[0];
+    let bestMove = currentOpponent.moves[0];
     let maxDmg = -1;
 
-    activeOpponent.moves.forEach(m => {
+    currentOpponent.moves.forEach(m => {
       if (m.pp <= 0 && m.power > 0) return;
-      const testDmg = calculateDamage(activeOpponent, activePlayer, m).damage;
+      const testDmg = calculateDamage(currentOpponent, currentPlayer, m).damage;
       if (testDmg > maxDmg) {
         maxDmg = testDmg;
         bestMove = m;
@@ -1368,7 +1396,7 @@ export function BattleScreen({
             id="battle-saga-scroll"
             className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 scroll-smooth custom-scrollbar"
           >
-            {logs.map((log) => (
+            {[...logs].reverse().map((log) => (
               <div
                 key={log.id}
                 className={`text-[11px] p-2.5 rounded-xl border leading-relaxed animate-slice-in-right ${
@@ -1497,7 +1525,7 @@ export function BattleScreen({
                   if (logFilter === 'damage') return l.type === 'damage' || l.type === 'heal' || l.type === 'super-effective' || l.type === 'not-very-effective' || l.type === 'ineffective';
                   if (logFilter === 'stat-change') return l.type === 'stat-change' || l.type === 'status' || l.type === 'faint';
                   return true;
-                }).map((log, index) => (
+                }).slice().reverse().map((log, index) => (
                   <div
                     key={log.id || index}
                     className={`text-[11px] p-2.5 rounded-xl border leading-relaxed flex items-start gap-2 ${
