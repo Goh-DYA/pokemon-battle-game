@@ -249,6 +249,9 @@ export function TeamSelector({ onSelectTeam }: TeamSelectorProps) {
                               type === 'Ghost' ? 'bg-violet-950 text-violet-400 border border-violet-900' :
                               type === 'Rock' ? 'bg-stone-900 text-stone-400 border border-stone-700' :
                               type === 'Poison' ? 'bg-purple-950/70 text-fuchsia-400 border border-purple-900' :
+                              type === 'Bug' ? 'bg-lime-950 text-lime-400 border border-lime-900' :
+                              type === 'Dark' ? 'bg-zinc-950 text-zinc-400 border border-zinc-900' :
+                              type === 'Flying' ? 'bg-emerald-950 text-emerald-300 border border-emerald-900' :
                               'bg-zinc-850 text-zinc-300 border border-zinc-800'
                             }`}
                           >
